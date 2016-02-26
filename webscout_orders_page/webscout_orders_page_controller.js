@@ -2,6 +2,8 @@
 * Created by patricepaquette on 2016-02-23.
 */
 
+console.log("YEAH!");
+
 //add the fulfillment buttons to the orders grid
 function create_fulfill_links(grid_data){
   function fulfill(){
@@ -32,7 +34,7 @@ function create_fulfill_links(grid_data){
   }
 
   //get all source links for orders
-  var source_links = jQuery("#ordersGrid tr td a[ng-if*='domainItem.item_source_link']");
+  var source_links = jQuery("#ordersGrid tr td a[ng-if*='domainItem.item_source_link'], #ordersGrid tr td a[ng-if*='domainItem.item_source_link']");
 
   //add the fulfill onClick listener to each element
   source_links.click(fulfill);

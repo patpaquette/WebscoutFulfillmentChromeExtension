@@ -6,9 +6,9 @@
 
   "browser_action": {},
   "content_scripts": [
-    {"matches": ["<all_urls>"], "include_globs": ["*webscout_fulfillment=1*"], "js": ["bower_components/lodash/lodash.js", "bower_components/jquery/dist/jquery.js"]},
-    {"matches": ["<all_urls>"], "include_globs": ["*page=product*"], "js": ["source_website/product_page_controller.js"]},
-    {"matches": ["http://45.55.18.141/*", "http://localhost:8888/*"], "include_globs": ["*#/orders*"], "js": ["bower_components/jquery/dist/jquery.js", "webscout_orders_page/webscout_orders_page_controller.js"]}
+    {"matches": ["<all_urls>"], "include_globs": ["*webscout_fulfillment=1*"], "js": ["bower_components/lodash/lodash.js", "bower_components/jquery/dist/jquery.js", "source_website/fulfillment.js", "bower_components/chosen/chosen.jquery.js", "bower_components/handlebars/handlebars.js"]},
+//    {"matches": ["<all_urls>"], "include_globs": ["*page=product*"], "js": [""]},
+    {"matches": ["http://45.55.18.141/*"], "include_globs": ["*#/orders*"], "js": ["bower_components/lodash/lodash.js", "bower_components/jquery/dist/jquery.js", "webscout_orders_page/webscout_orders_page_controller.js"]}
   ],
   "background": {
     "scripts": ["background.js"]
@@ -16,8 +16,11 @@
   "web_accessible_resources": [
     "bower_components/lodash/lodash.js",
     "bower_components/jquery/dist/jquery.js",
-    "product_page/product_page_controller.js",
-    "webscout_orders_page/webscout_orders_page_controller.js"
+    "bower_components/chosen/chosen.jquery.js",
+    "bower_components/handlebars/handlebars.js",
+    "source_website/fulfillment.js",
+    "webscout_orders_page/webscout_orders_page_controller.js",
+    "source_website/fulfillment_overlay.html"
   ],
   "permissions": [
     "activeTab",

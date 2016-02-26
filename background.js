@@ -5,57 +5,75 @@
 var current_order = null;
 
 function set_order_data(order_data){
+  console.log("set order data");
   current_order = order_data;
 }
 
-function executeScripts(js_includes, sender, callback){
+function executeScripts(js_includes, tabId, callback){
   js_includes.forEach(function(url){
-    chrome.tabs.executeScript(sender.tab.id, {file: url}, callback);
+    chrome.tabs.executeScript(tabId, {file: url}, callback);
   });
 }
 
+function injectExtensionScripts(module, tabId, callback){
+  switch(module){
+    case "fulfillment":
+      var js_includes = [
+        "bower_components/lodash/lodash.js",
+        "bower_components/jquery/dist/jquery.js",
+        "source_website/fulfillment.js",
+        "bower_components/handlebars/handlebars.js"
+      ];
+
+      executeScripts(js_includes, tabId, callback);
+      break;
+  }
+}
+
+//handle messages from content scripts
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   console.log(message);
-
-  if(message.inject_fulfillment_scripts){ //inject scripts required to fulfill orders on source websites
-    var js_includes = [
-      "bower_components/lodash/lodash.js",
-      "bower_components/jquery/dist/jquery.js",
-      "source_website/product_page_controller.js"
-    ];
-
-    executeScripts(js_includes, sender, function() {
-      sendResponse({ done: true });
-    });
-
-    return true; // Required for async sendResponse()
-  }
-  else if(message.inject_webscout_scripts){ //inject scripts required on the webscout orders page
-    var js_includes = [
-      "bower_components/lodash/lodash.js",
-      "bower_components/jquery/dist/jquery.js",
-      "webscout_orders_page/webscout_orders_page_controller.js"
-    ];
-
-    console.log("HMMM");
-    executeScripts(js_includes, sender, function() {
-      sendResponse({ done: true });
-    });
-
-    return true; // Required for async sendResponse()
-  }
-  else if(message.set_order_data){ //set order data for use in the rest of the process
+  if(message.set_order_data){ //set order data for use in the rest of the process
     set_order_data(message.order_data);
   }
   else if(message.get_order_data){ //get order data
     console.log("get_order_data");
     console.log(sender);
 
-    if(sender.url.indexOf(current_order.item_source_link) >= 0){
-      sendResponse({success: true, order_data: current_order});
+    if(current_order){
+      var domain_re = /.*([^\.]+)(com|net|org|info|coop|int|co\.uk|org\.uk|ac\.uk|uk|__and so on__)$/g
+      var order_source_domain = current_order.item_source_link.match(domain_re);
+      var current_domain = sender.url.match(domain_re);
+
+      if(order_source_domain == current_domain){
+        sendResponse({success: true, order_data: current_order});
+      }
+      else {
+        sendResponse({success: false, error_code: "domains_dont_match"});
+      }
     }
-    else {
-      sendResponse({success: false, error_code: "urls_dont_match"});
+    else{
+      sendResponse({success: false, error_code: "no_order"});
     }
   }
 });
+
+//check if tab url has same domain as the order source (this is required for websites that wipe out the url parameters, which is used to determine whether the extension should be enabled)
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+  //only check if there is an order to fulfill
+
+  if(current_order && changeInfo.status === 'complete'){
+    console.log(tab.url);
+    console.log(current_order.item_source_link);
+
+    var domain_re = /.*([^\.]+)(com|net|org|info|coop|int|co\.uk|org\.uk|ac\.uk|uk|__and so on__)$/g
+    var order_source_domain = current_order.item_source_link.match(domain_re);
+    var current_domain = tab.url.match(domain_re);
+
+
+    if(order_source_domain === current_domain){
+      //inject fulfillment scripts
+      injectExtensionScripts("fulfillment", tabId);
+    }
+  }
+})

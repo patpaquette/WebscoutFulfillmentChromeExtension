@@ -1,0 +1,55 @@
+<div id="fulfillment-overlay" style="display:block;position:fixed;top:100px;left:0px;width:250px;height:700px;z-index:255;padding: 5px; color: white; background-color: #39b1d4;">
+    <p>
+        <b>Quantity</b> :
+        <span>{{quantity}}</span>
+    </p>
+
+    <p>
+        <b>First Name</b><br/>
+        <span>{{first_name}}</span>
+    </p>
+
+    <p>
+        <b>Last Name</b><br/>
+        <span>{{last_name}}</span>
+    </p>
+
+    <p>
+        <b>Street Address</b><br/>
+        <span>{{shipping_address_line_1}}</span><br/>
+        {{#if shipping_address_line_2}}
+        <span>{{shipping_address_line_2}}</span><br/>
+        {{/if}}
+        {{#if shipping_address_line_3}}
+        <span>{{shipping_address_line_2}}</span>
+        {{/if}}
+    </p>
+
+    <p>
+        <b>Postal Code</b><br/>
+        <span>{{shipping_postal_code}}</span>
+    </p>
+
+    <p>
+        <b>City</b><br/>
+        <span>{{shipping_city}}</span>
+    </p>
+
+    <p>
+        <b>State</b><br/>
+        <span>{{shipping_state}}</span>
+    </p>
+
+    <p>
+        <b>Country</b><br/>
+        <span>{{shipping_country_code}}</span>
+    </p>
+
+    <p>
+        <b>Phone</b><br/>
+        <span>{{shipping_phone}}</span>
+    </p>
+
+    <TEXTAREA ID="holdtext" STYLE="display:none;">
+    </TEXTAREA>
+</div>
