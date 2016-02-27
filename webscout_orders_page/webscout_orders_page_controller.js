@@ -2,8 +2,6 @@
 * Created by patricepaquette on 2016-02-23.
 */
 
-console.log("YEAH!");
-
 //add the fulfillment buttons to the orders grid
 function create_fulfill_links(grid_data){
   function fulfill(){
