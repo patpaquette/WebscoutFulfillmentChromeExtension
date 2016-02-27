@@ -59,9 +59,9 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
 
     shipping_fields.quantity = response.order_data.quantity * response.order_data.aoi_quantity;
-    var split_name = shipping_fields.shipping_name.split(" ", 2);
+    var split_name = shipping_fields.shipping_name.split(" ");
     shipping_fields.first_name = split_name[0];
-    shipping_fields.last_name = split_name[1];
+    shipping_fields.last_name = split_name.splice(1).join(' ');
 
     var overlay_template = Handlebars.compile(body);
     var overlay_html = overlay_template(shipping_fields);
@@ -69,7 +69,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     $('body').append($(overlay_html));
 
     //add click to copy functionality
-    var copy_elem = $("<a href='#' style='margin-left: 3px;' onclick='return false;'>copy</a>")
+    var copy_elem = $("<a href='#' style='margin-left: 3px; color: rgb(0, 109, 192);' onclick='return false;'>copy</a>")
       .click(function(){
         var closest_span = $(this).prev('span');
         copyToClipboard(closest_span.get(0));
