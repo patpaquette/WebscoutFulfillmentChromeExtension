@@ -32,7 +32,7 @@ function create_fulfill_links(grid_data){
   }
 
   //get all source links for orders
-  var source_links = jQuery("#ordersGrid tr td a[ng-if*='domainItem.item_source_link'], #ordersGrid tr td div[ng-if*='dataItem.item_source_link'] a");
+  var source_links = jQuery("#ordersGrid tr td a[ng-if*='domainItem.item_source_link']:first-child, #ordersGrid tr td div[ng-if*='dataItem.item_source_link'] a:first-child");
 
   //add the fulfill onClick listener to each element
   source_links.click(fulfill);

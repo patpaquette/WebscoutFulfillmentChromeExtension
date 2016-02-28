@@ -7,7 +7,6 @@
   "browser_action": {},
   "content_scripts": [
     {"matches": ["<all_urls>"], "include_globs": ["*webscout_fulfillment=1*"], "js": ["bower_components/lodash/lodash.js", "bower_components/jquery/dist/jquery.js", "source_website/fulfillment.js", "bower_components/chosen/chosen.jquery.js", "bower_components/handlebars/handlebars.js"]},
-//    {"matches": ["<all_urls>"], "include_globs": ["*page=product*"], "js": [""]},
     {"matches": ["http://45.55.18.141/*"], "include_globs": ["*#/orders*"], "js": ["bower_components/lodash/lodash.js", "bower_components/jquery/dist/jquery.js", "webscout_orders_page/webscout_orders_page_controller.js"]}
   ],
   "background": {
