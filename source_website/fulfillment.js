@@ -5,6 +5,9 @@
 function copyToClipboard(elem) {
   // create hidden text element, if it doesn't already exist
   var targetId = "_hiddenCopyText_";
+  console.log(document.body);
+  console.log("element: ");
+  console.log(elem);
   var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
   var origSelectionStart, origSelectionEnd;
   if (isInput) {
@@ -15,6 +18,8 @@ function copyToClipboard(elem) {
   } else {
     // must use a temporary form element for the selection and copy
     target = document.getElementById(targetId);
+    console.log(target);
+    console.log(!target);
     if (!target) {
       var target = document.createElement("textarea");
       target.style.position = "absolute";
@@ -37,6 +42,13 @@ function copyToClipboard(elem) {
   } catch(e) {
     succeed = false;
   }
+
+  // highlight text if copy is successful
+  console.log("succeed: " + succeed);
+  if (succeed) {
+    elem.setAttribute("style", "background-color:yellow");
+  }
+
   // restore original focus
   if (currentFocus && typeof currentFocus.focus === "function") {
     currentFocus.focus();
@@ -67,6 +79,16 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     var overlay_html = overlay_template(shipping_fields);
 
     $('body').append($(overlay_html));
+
+
+    ////add copy combo button
+    //var copy_combo = $("<button type='button'>Start copy combo!</button>")
+    //  .click(function(){
+    //    var spans = $("#fulfillment-overlay span");
+    //    copyToClipboard(spans.get(0));
+    //  });
+    //
+    //$("#fulfillment-overlay h1").after(copy_combo);
 
     //add click to copy functionality
     var copy_elem = $("<a href='#' style='margin-left: 3px; color: rgb(0, 109, 192);' onclick='return false;'>copy</a>")
