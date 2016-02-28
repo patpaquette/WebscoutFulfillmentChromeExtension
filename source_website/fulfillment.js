@@ -67,7 +67,9 @@ function copyToClipboard(elem) {
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
 
-    //build fulfillment overlay (shows shipping address, name, etc)
+    //Note: bedbathandbeyond has something going on that would build two overlays and two copy buttons
+
+    //build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
     if($("#fulfillment-overlay").length < 0) {
       var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
 
@@ -80,25 +82,26 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       var overlay_html = overlay_template(shipping_fields);
 
       $('body').append($(overlay_html));
+    }
+    //add copy combo button
+    var copy_combo = $("<button type='button'>Start copy combo!</button>")
+      .click(function(){
+        var spans = $("#fulfillment-overlay span");
+        copyToClipboard(spans.get(0));
+      });
 
-      ////add copy combo button
-      //var copy_combo = $("<button type='button'>Start copy combo!</button>")
-      //  .click(function(){
-      //    var spans = $("#fulfillment-overlay span");
-      //    copyToClipboard(spans.get(0));
-      //  });
-      //
-      //$("#fulfillment-overlay h1").after(copy_combo);
+    $("#fulfillment-overlay h1").after(copy_combo);
 
-      //add click to copy functionality
+    //add click to copy functionality if it hasn't been done already
+    if($("#fulfillment-overlay a").length < 0) {
       var copy_elem = $("<a href='#' style='margin-left: 3px; color: rgb(0, 109, 192);' onclick='return false;'>copy</a>")
         .click(function () {
           var closest_span = $(this).prev('span');
           copyToClipboard(closest_span.get(0));
         });
-
       $("#fulfillment-overlay span").after(copy_elem);
     }
+
 
   });
 });
