@@ -3,7 +3,7 @@
  */
 
 function copyToClipboard(elem) {
-  // create hidden text element, if it doesn't already exist
+  // Create hidden text element, if it doesn't already exist
   var targetId = "_hiddenCopyText_";
   console.log(document.body);
   console.log("element: ");
@@ -11,12 +11,12 @@ function copyToClipboard(elem) {
   var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
   var origSelectionStart, origSelectionEnd;
   if (isInput) {
-    // can just use the original source element for the selection and copy
+    // Can just use the original source element for the selection and copy
     target = elem;
     origSelectionStart = elem.selectionStart;
     origSelectionEnd = elem.selectionEnd;
   } else {
-    // must use a temporary form element for the selection and copy
+    // Must use a temporary form element for the selection and copy
     target = document.getElementById(targetId);
     console.log(target);
     console.log(!target);
@@ -30,12 +30,12 @@ function copyToClipboard(elem) {
     }
     target.textContent = elem.textContent;
   }
-  // select the content
+  // Select the content
   var currentFocus = document.activeElement;
   target.focus();
   target.setSelectionRange(0, target.value.length);
 
-  // copy the selection
+  // Copy the selection
   var succeed;
   try {
     succeed = document.execCommand("copy");
@@ -43,16 +43,16 @@ function copyToClipboard(elem) {
     succeed = false;
   }
 
-  // restore original focus
+  // Restore original focus
   if (currentFocus && typeof currentFocus.focus === "function") {
     currentFocus.focus();
   }
 
   if (isInput) {
-    // restore prior selection
+    // Restore prior selection
     elem.setSelectionRange(origSelectionStart, origSelectionEnd);
   } else {
-    // clear temporary content
+    // Clear temporary content
     target.textContent = "";
   }
   return succeed;
@@ -63,16 +63,17 @@ function highlight(elem) {
 }
 
 function removeHighlight(elem) {
-  //$(elem).attr("style", $(elem).attr("style").replace(" ?background-color:[^;]+;?", ""));
+  // $(elem).attr("style", $(elem).attr("style").replace(" ?background-color:[^;]+;?", ""));
   $(elem).removeAttr("style");
 }
 
-var copy_index = -1;
 
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
 
-    //build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
+
+    /* Fulfillment overlay */
+    // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
     if($("#fulfillment-overlay").length < 0) {
       var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
 
@@ -87,7 +88,8 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       $('body').append($(overlay_html));
     }
 
-    //add click to copy functionality if it hasn't been done already
+    /* Individual copy buttons */
+    // Add click to copy functionality if it hasn't been done already
     if($("#fulfillment-overlay a").length < 0) {
       var copy_elem = $("<a href='#' style='margin-left: 3px; color: rgb(0, 109, 192);' onclick='return false;'>copy</a>")
         .click(function () {
@@ -97,30 +99,43 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       $("#fulfillment-overlay span").after(copy_elem);
     }
 
-    //add combo copy functionality to click event
-    console.log(copy_index);
-    $("#fulfillment-overlay button")
-      .click(function () {
-        var spans = $("#fulfillment-overlay span");
+    /* Copy combo button */
+    // Prep payload and add copy combo functionality to the button's click event
+    var copy_index = -1;
+    var spans = $("#fulfillment-overlay span");
+    var data = {index:copy_index, spans:spans};
 
-        if(copy_index < 0) {
-          //add .click callback with payload if this is the first time clicking copy combo
-          var data = {index:copy_index, spans:spans};
-          $("input").click(data, function (event) {
-            $(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
-            console.log("CLICK! " + event.data.index);
-            //remove previous span highlight and get the next one ready
-            removeHighlight($(event.data.spans).get(event.data.index));
-            event.data.index += 1;
-            highlight($(event.data.spans).get(event.data.index));
+    $("#fulfillment-overlay button")
+      .click(data, function (event) {
+
+        // Add .click callback with payload to all inputs if this is the first time clicking copy combo
+        if(event.data.index < 0) {
+          $("input")
+            .click(event.data, function (event) {
+
+              // Only change input values if there are spans left to go through
+              if(event.data.index < event.data.spans.length) {
+                $(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
+
+                // Change button name if the last span has been reached
+                if(event.data.index === event.data.spans.length - 1) {
+                  $("#fulfillment-overlay button").text("Restart copy combo!");
+                }
+
+                // Remove previous span highlight and get the next one ready
+                removeHighlight($(event.data.spans).get(event.data.index));
+                event.data.index += 1;
+                highlight($(event.data.spans).get(event.data.index));
+              }
           });
         }
-        //reset highlights and index
-        copy_index = 0;
-        removeHighlight(spans);
-        highlight(spans.get(0));
-        copyToClipboard(spans.get(0));
+        // Reset highlights and index every time the copy combo button is clicked
+        event.data.index = 0;
+        removeHighlight(event.data.spans);
+        highlight(event.data.spans.get(0));
+        copyToClipboard(event.data.spans.get(0));
       });
+    // Change the text of the button to indicate that everything is ready to go
     $("#fulfillment-overlay button").text("Start copy combo!");
   });
 });
