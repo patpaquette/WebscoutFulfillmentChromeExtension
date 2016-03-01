@@ -67,6 +67,15 @@ function removeHighlight(elem) {
   $(elem).removeAttr("style");
 }
 
+function pasteStringInElem(elem){
+  $(elem).select();
+  if(document.execCommand('paste')){
+    console.log("should have pasted!");
+  }
+  else{
+    console.log("no paste");
+  }
+}
 
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
@@ -74,7 +83,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
 
     /* Fulfillment overlay */
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
-    if($("#fulfillment-overlay").length < 0) {
+    if($("#fulfillment-overlay").length == 0) {
       var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
 
       shipping_fields.quantity = response.order_data.quantity * response.order_data.aoi_quantity;
@@ -85,7 +94,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       var overlay_template = Handlebars.compile(body);
       var overlay_html = overlay_template(shipping_fields);
 
-      $('body').append($(overlay_html));
+      $('body').prepend($(overlay_html));
     }
 
     /* Individual copy buttons */
@@ -105,17 +114,18 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     var spans = $("#fulfillment-overlay span");
     var data = {index:copy_index, spans:spans};
 
-    $("#fulfillment-overlay button")
+    $("#fulfillment-overlay #copy-combo")
       .click(data, function (event) {
 
         // Add .click callback with payload to all inputs if this is the first time clicking copy combo
         if(event.data.index < 0) {
           $("input")
             .click(event.data, function (event) {
-
               // Only change input values if there are spans left to go through
               if(event.data.index < event.data.spans.length) {
-                $(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
+                //$(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
+                copyToClipboard($(event.data.spans).get(event.data.index));
+                pasteStringInElem(this);
 
                 // Change button name if the last span has been reached
                 if(event.data.index === event.data.spans.length - 1) {
@@ -133,7 +143,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
         event.data.index = 0;
         removeHighlight(event.data.spans);
         highlight(event.data.spans.get(0));
-        copyToClipboard(event.data.spans.get(0));
+        //copyToClipboard(event.data.spans.get(0));
       });
     // Change the text of the button to indicate that everything is ready to go
     $("#fulfillment-overlay button").text("Start copy combo!");
