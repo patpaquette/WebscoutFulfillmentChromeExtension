@@ -26,6 +26,8 @@
     "activeTab",
     "tabs",
     "http://*/*",
-    "https://*/*"
+    "https://*/*",
+    "clipboardRead",
+    "clipboardWrite"
   ]
 }

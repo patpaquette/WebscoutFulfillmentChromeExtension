@@ -66,10 +66,18 @@ function removeHighlight(elem) {
   $(elem).css("background-color", "");
 }
 
+function pasteStringInElem(elem){
+  $(elem).select();
+  if(document.execCommand('paste')){
+    console.log("should have pasted!");
+  }
+  else{
+    console.log("no paste");
+  }
+}
 
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
-
 
     /* Fulfillment overlay */
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
@@ -84,7 +92,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       var overlay_template = Handlebars.compile(body);
       var overlay_html = overlay_template(shipping_fields);
 
-      $('body').append($(overlay_html));
+      $('body').prepend($(overlay_html));
     }
 
     // Prep payload for future .click events
@@ -96,10 +104,11 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     // Add .click handler with payload to all inputs
     $("input")
       .click(data, function (event) {
-
         // Only change input values if copy combo or a span has been clicked
         if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
           $(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
+          copyToClipboard($(event.data.spans).get(event.data.index));
+          pasteStringInElem(this);
           console.log(event.data.index);
           // Remove previous span highlight and get the next one ready
           removeHighlight($(event.data.spans).get(event.data.index));
@@ -124,10 +133,10 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     // Add .click callback for spans
     $("#fulfillment-overlay span.buyer-info")
       .click(data, function(event) {
-        event.data.index = event.data.spans.index($(this));
+        event.data.index = event.data.spans.index(this);
         removeHighlight(event.data.spans);
-        highlight($(this));
-        copyToClipboard($(this));
+        highlight(this);
+        copyToClipboard(this);
     });
 
     // Add .click callback for labels
@@ -143,7 +152,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
 
     /* Keyboard shortcuts */
     $(document).keydown(function(event) {
-      if(event.keyCode == )
+      if(event.keyCode == 68) //placeholder
       console.log(event);
     });
 
