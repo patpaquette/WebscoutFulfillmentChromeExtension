@@ -59,12 +59,11 @@ function copyToClipboard(elem) {
 }
 
 function highlight(elem) {
-  $(elem).attr("style", "background-color:yellow");
+  $(elem).css("background-color", "yellow");
 }
 
 function removeHighlight(elem) {
-  // $(elem).attr("style", $(elem).attr("style").replace(" ?background-color:[^;]+;?", ""));
-  $(elem).removeAttr("style");
+  $(elem).css("background-color", "");
 }
 
 function pasteStringInElem(elem){
@@ -79,7 +78,6 @@ function pasteStringInElem(elem){
 
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
-
 
     /* Fulfillment overlay */
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
@@ -97,55 +95,66 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       $('body').prepend($(overlay_html));
     }
 
-    /* Individual copy buttons */
-    // Add click to copy functionality if it hasn't been done already
-    if($("#fulfillment-overlay a").length < 0) {
-      var copy_elem = $("<a href='#' style='margin-left: 3px; color: rgb(0, 109, 192);' onclick='return false;'>copy</a>")
-        .click(function () {
-          var closest_span = $(this).prev('span');
-          copyToClipboard(closest_span.get(0));
-        });
-      $("#fulfillment-overlay span").after(copy_elem);
-    }
-
-    /* Copy combo button */
-    // Prep payload and add copy combo functionality to the button's click event
+    // Prep payload for future .click events
     var copy_index = -1;
-    var spans = $("#fulfillment-overlay span");
+    var spans = $("#fulfillment-overlay span.buyer-info");
     var data = {index:copy_index, spans:spans};
 
-    $("#fulfillment-overlay #copy-combo")
+    /* Input .click handlers */
+    // Add .click handler with payload to all inputs
+    $("input")
       .click(data, function (event) {
-
-        // Add .click callback with payload to all inputs if this is the first time clicking copy combo
-        if(event.data.index < 0) {
-          $("input")
-            .click(event.data, function (event) {
-              // Only change input values if there are spans left to go through
-              if(event.data.index < event.data.spans.length) {
-                //$(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
-                copyToClipboard($(event.data.spans).get(event.data.index));
-                pasteStringInElem(this);
-
-                // Change button name if the last span has been reached
-                if(event.data.index === event.data.spans.length - 1) {
-                  $("#fulfillment-overlay button").text("Restart copy combo!");
-                }
-
-                // Remove previous span highlight and get the next one ready
-                removeHighlight($(event.data.spans).get(event.data.index));
-                event.data.index += 1;
-                highlight($(event.data.spans).get(event.data.index));
-              }
-          });
+        // Only change input values if copy combo or a span has been clicked
+        if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
+          $(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
+          copyToClipboard($(event.data.spans).get(event.data.index));
+          pasteStringInElem(this);
+          console.log(event.data.index);
+          // Remove previous span highlight and get the next one ready
+          removeHighlight($(event.data.spans).get(event.data.index));
+          event.data.index += 1;
+          highlight($(event.data.spans).get(event.data.index));
         }
+    });
+
+    /* Copy combo handler */
+    $("#fulfillment-overlay button")
+      .click(data, function (event) {
         // Reset highlights and index every time the copy combo button is clicked
         event.data.index = 0;
         removeHighlight(event.data.spans);
         highlight(event.data.spans.get(0));
-        //copyToClipboard(event.data.spans.get(0));
+        copyToClipboard(event.data.spans.get(0));
+
+        $("#fulfillment-overlay button").text("Restart copy combo!");
+      });
+
+    /* Click to copy functionality */
+    // Add .click callback for spans
+    $("#fulfillment-overlay span.buyer-info")
+      .click(data, function(event) {
+        event.data.index = event.data.spans.index(this);
+        removeHighlight(event.data.spans);
+        highlight(this);
+        copyToClipboard(this);
+    });
+
+    // Add .click callback for labels
+    $("#fulfillment-overlay b.buyer-info")
+      .click(data, function(event) {
+        event.data.index = event.data.spans.index($(this).nextAll("span.buyer-info"));
+        removeHighlight(event.data.spans);
+        highlight(event.data.spans.get(event.data.index));
+        copyToClipboard(event.data.spans.get(event.data.index));
       });
     // Change the text of the button to indicate that everything is ready to go
     $("#fulfillment-overlay button").text("Start copy combo!");
+
+    /* Keyboard shortcuts */
+    $(document).keydown(function(event) {
+      if(event.keyCode == 68) //placeholder
+      console.log(event);
+    });
+
   });
 });
