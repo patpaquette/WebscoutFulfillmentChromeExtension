@@ -142,6 +142,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     $("input")
       .click(data, function(event) {
         // Only change input values if copy combo or a span has been clicked
+        console.log(event.data.index);
         if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
           //$(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
           copyToClipboard($(event.data.spans).get(event.data.index));
