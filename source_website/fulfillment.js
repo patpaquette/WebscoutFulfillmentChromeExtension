@@ -76,6 +76,11 @@ function pasteStringInElem(elem){
   }
 }
 
+//function setIndex(index) {
+//  console.log("new index: " + index);
+//  highlight
+//}
+
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
 
@@ -103,10 +108,10 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     /* Input .click handlers */
     // Add .click handler with payload to all inputs
     $("input")
-      .click(data, function (event) {
+      .click(data, function(event) {
         // Only change input values if copy combo or a span has been clicked
         if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-          $(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
+          //$(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
           copyToClipboard($(event.data.spans).get(event.data.index));
           pasteStringInElem(this);
           console.log(event.data.index);
@@ -119,7 +124,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
 
     /* Copy combo handler */
     $("#fulfillment-overlay button")
-      .click(data, function (event) {
+      .click(data, function(event) {
         // Reset highlights and index every time the copy combo button is clicked
         event.data.index = 0;
         removeHighlight(event.data.spans);
@@ -148,13 +153,26 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
         copyToClipboard(event.data.spans.get(event.data.index));
       });
     // Change the text of the button to indicate that everything is ready to go
-    $("#fulfillment-overlay button").text("Start copy combo!");
 
     /* Keyboard shortcuts */
-    $(document).keydown(function(event) {
-      if(event.keyCode == 68) //placeholder
-      console.log(event);
+    var altDown = false;
+
+    $(document).keydown(altDown, function(event) {
+      if(event.keyCode == 18) {
+        event.altDown = true;
+      }
+      else if(event.altDown && event.keyCode == 81) {
+        console.log("ALT+Q keybind!"); // doesn't work! :(
+      }
+      console.log(event.keyCode);
+    });
+    $(document).keyup(altDown, function(event) {
+      if(event.keyCode == 18) {
+        event.altDown = false;
+      }
+      console.log(event.keyCode);
     });
 
+    $("#fulfillment-overlay button").text("Start copy combo!");
   });
 });
