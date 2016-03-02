@@ -92,7 +92,39 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       var overlay_template = Handlebars.compile(body);
       var overlay_html = overlay_template(shipping_fields);
 
-      $('body').prepend($(overlay_html));
+      //$('body').children().wrapAll('<div id="webscout_fulfillment_source_content" />');
+      //$('body').prepend($(overlay_html));
+
+      var overlay = $(overlay_html);
+      var html = $('html');
+      var currentLeft = html.css('left');
+      if(currentLeft == 'auto'){
+        currentLeft = 0;
+      }
+      else{
+        currentLeft = parseFloat(currentLeft);
+      }
+      
+      var currentWidth = html.css('width');
+      console.log(currentWidth);
+      if(currentWidth == 'auto'){
+        currentWidth = 0;
+      }
+      else{
+        currentWidth = parseFloat(currentWidth);
+      }
+
+      var overlayWidth = 250;
+      var newLeft = (overlayWidth + currentLeft) + 'px';
+      var newWidth = currentWidth - overlayWidth;
+
+      console.log(overlayWidth);
+      console.log("newwidth : " + newWidth);
+      
+      html.css('position', 'relative');
+      html.css('left', newLeft);
+      html.css('width', newWidth);
+      html.prepend(overlay);
     }
 
     // Prep payload for future .click events
