@@ -1,6 +1,25 @@
 /**
  * Created by patricepaquette on 2016-02-22.
  */
+function extractDomain(url) {
+  var domain;
+  //find & remove protocol (http, ftp, etc.) and get domain
+  if (url.indexOf("://") > -1) {
+    domain = url.split('/')[2];
+  }
+  else {
+    domain = url.split('/')[0];
+  }
+
+  //find & remove port number
+  domain = domain.split(':')[0];
+
+  return domain;
+}
+
+function getWebDriver(source_domain){
+  return new BaseWebDriver();
+}
 
 function copyToClipboard(elem) {
   // Create hidden text element, if it doesn't already exist
@@ -78,6 +97,8 @@ function pasteStringInElem(elem){
 
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
+    //get web driver for this domain
+    var web_driver = getWebDriver(extractDomain(window.location.href));
 
     /* Fulfillment overlay */
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
@@ -91,40 +112,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
 
       var overlay_template = Handlebars.compile(body);
       var overlay_html = overlay_template(shipping_fields);
-
-      //$('body').children().wrapAll('<div id="webscout_fulfillment_source_content" />');
-      //$('body').prepend($(overlay_html));
-
-      var overlay = $(overlay_html);
-      var html = $('html');
-      var currentLeft = html.css('left');
-      if(currentLeft == 'auto'){
-        currentLeft = 0;
-      }
-      else{
-        currentLeft = parseFloat(currentLeft);
-      }
-      
-      var currentWidth = html.css('width');
-      console.log(currentWidth);
-      if(currentWidth == 'auto'){
-        currentWidth = 0;
-      }
-      else{
-        currentWidth = parseFloat(currentWidth);
-      }
-
-      var overlayWidth = 250;
-      var newLeft = (overlayWidth + currentLeft) + 'px';
-      var newWidth = currentWidth - overlayWidth;
-
-      console.log(overlayWidth);
-      console.log("newwidth : " + newWidth);
-      
-      html.css('position', 'relative');
-      html.css('left', newLeft);
-      html.css('width', newWidth);
-      html.prepend(overlay);
+      web_driver.insert_overlay(overlay_html);
     }
 
     // Prep payload for future .click events
@@ -136,6 +124,7 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     // Add .click handler with payload to all inputs
     $("input")
       .click(data, function (event) {
+        console.log("clicked");
         // Only change input values if copy combo or a span has been clicked
         if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
           $(this).attr("value", $($(event.data.spans).get(event.data.index)).text());

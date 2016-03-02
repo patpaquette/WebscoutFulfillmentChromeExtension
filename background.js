@@ -38,7 +38,8 @@ function injectExtensionScripts(module, tabId, callback){
         "bower_components/lodash/lodash.js",
         "bower_components/jquery/dist/jquery.js",
         "source_website/fulfillment.js",
-        "bower_components/handlebars/handlebars.js"
+        "bower_components/handlebars/handlebars.js",
+        "source_website/web_drivers/base_web_driver.js"
       ];
 
       executeScripts(js_includes, tabId, callback);
