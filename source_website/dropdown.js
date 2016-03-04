@@ -64,31 +64,45 @@ var usStates = [
   { name: 'WYOMING', abbreviation: 'WY' }
 ];
 
-// Returns the equivalent state notation (full or 2 letter)
-function findStateEquivalence(state) {
+// Returns the chosen state notation (full or 2 letter)
+function getState(state, returnFull) {
   var equivalent;
 
   if(state.length > 2) {
     equivalent = _.find(usStates, function(object) {
-      return object.name == state;
-    }).abbreviation;
+      return object.name.indexOf(state.toUpperCase()) > -1;
+    });
 
   } else if(state.length == 2) {
     equivalent = _.find(usStates, function(object) {
-      return object.abbreviation == state;
-    }).name;
+      return object.abbreviation == state.toUpperCase();
+    });
   }
-  return equivalent;
+
+  if(returnFull) {
+    return equivalent.name;
+  } else {
+    return equivalent.abbreviation;
+  }
 }
 
-function setCallbacks(domain) {
-  if(domain == "walmart") {
+function setDropdownSelections(order_data) {
+  if(order_data.domain_host == "walmart") {
+    // Get the state format that matches Walmart's (full)
+    var state = getState(order_data.shipping_state, true);
 
+    // Find and click the button corresponding to the matching state (if there is one)
+    // which will select it
+    $("button[class*='chooser-option']").filter(function (index, element) {
+      if ($(element).text().toUpperCase() == state.toUpperCase()) {
+        console.log("clicking element");
+        $(element).click();
+        return true;
+      }
+    });
   }
 }
 
-var a = findStateEquivalence('PA');
-console.log(a);
 //// Add .click handler with payload to all dropdown menus (select)
 //$("select")
 //  .click(data, function(event) {

@@ -24,9 +24,9 @@ function getWebDriver(source_domain){
 function copyToClipboard(elem) {
   // Create hidden text element, if it doesn't already exist
   var targetId = "_hiddenCopyText_";
-  console.log(document.body);
-  console.log("element: ");
-  console.log(elem);
+  //console.log(document.body);
+  //console.log("element: ");
+  //console.log(elem);
   var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
   var origSelectionStart, origSelectionEnd;
   if (isInput) {
@@ -37,8 +37,8 @@ function copyToClipboard(elem) {
   } else {
     // Must use a temporary form element for the selection and copy
     target = document.getElementById(targetId);
-    console.log(target);
-    console.log(!target);
+    //console.log(target);
+    //console.log(!target);
     if (!target) {
       var target = document.createElement("textarea");
       target.style.position = "absolute";
@@ -85,6 +85,29 @@ function removeHighlight(elem) {
   $(elem).css("background-color", "");
 }
 
+/* Input .click handlers */
+// Add .click handler with payload to inputs if they don't have any yet
+function setInputHandlers(inputs, data) {
+  jQuery.each($(inputs), function(index, value) {
+    if(!jQuery._data(value, "events")) {
+      console.log("event added");
+      $(value)
+        .click(data, function (event) {
+          console.log("clicked " + event.data.index);
+          // Only change input values if copy combo or a span has been clicked
+          if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
+            copyToClipboard($(event.data.spans).get(event.data.index));
+            pasteStringInElem(this);
+            // Remove previous span highlight and get the next one ready
+            removeHighlight($(event.data.spans).get(event.data.index));
+            event.data.index += 1;
+            highlight($(event.data.spans).get(event.data.index));
+          }
+      });
+    }
+  });
+}
+
 function pasteStringInElem(elem){
   $(elem).select();
   if(document.execCommand('paste')){
@@ -102,8 +125,10 @@ function pasteStringInElem(elem){
 
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
+    console.log("MESSAGE RECEIVED");
     //get web driver for this domain
     var web_driver = getWebDriver(extractDomain(window.location.href));
+    console.log(response.order_data);
 
     /* Fulfillment overlay */
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
@@ -126,55 +151,59 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     var data = {index:copy_index, spans:spans};
 
     /* Input .click handlers */
-    // Add .click handler with payload to all inputs
-    $("input")
-      .click(data, function (event) {
-        console.log("clicked");
-        // Only change input values if copy combo or a span has been clicked
-        console.log(event.data.index);
-        if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-          //$(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
-          copyToClipboard($(event.data.spans).get(event.data.index));
-          pasteStringInElem(this);
-          console.log(event.data.index);
-          // Remove previous span highlight and get the next one ready
-          removeHighlight($(event.data.spans).get(event.data.index));
-          event.data.index += 1;
-          highlight($(event.data.spans).get(event.data.index));
-        }
-    });
+    setInputHandlers($("input"), data);
 
     /* Copy combo handler */
-    $("#fulfillment-overlay button")
-      .click(data, function(event) {
-        // Reset highlights and index every time the copy combo button is clicked
-        event.data.index = 0;
-        removeHighlight(event.data.spans);
-        highlight(event.data.spans.get(0));
-        copyToClipboard(event.data.spans.get(0));
+    if(!jQuery._data($("#fulfillment-overlay button"), "events")) {
+      $("#fulfillment-overlay button")
+        .click(data, function (event) {
+          // Set input handlers if there are new ones without a handler
+          setInputHandlers($("input"), data);
+          setDropdownSelections(response.order_data);
+          // Reset highlights and index every time the copy combo button is clicked
+          event.data.index = 0;
+          removeHighlight(event.data.spans);
+          highlight(event.data.spans.get(0));
+          copyToClipboard(event.data.spans.get(0));
 
-        $("#fulfillment-overlay button").text("Restart copy combo!");
-      });
+          $("#fulfillment-overlay button").text("Restart copy combo!");
+        });
+    }
 
     /* Click to copy functionality */
     // Add .click callback for spans
-    $("#fulfillment-overlay span.buyer-info")
-      .click(data, function(event) {
-        event.data.index = event.data.spans.index(this);
-        removeHighlight(event.data.spans);
-        highlight(this);
-        copyToClipboard(this);
-    });
+    if(!jQuery._data($("#fulfillment-overlay span.buyer-info"), "events")) {
+      $("#fulfillment-overlay span.buyer-info")
+        .click(data, function (event) {
+          setInputHandlers($("input"), data);
+          event.data.index = event.data.spans.index(this);
+          removeHighlight(event.data.spans);
+          highlight(this);
+          copyToClipboard(this);
+        });
+    }
 
     // Add .click callback for labels
-    $("#fulfillment-overlay b.buyer-info")
-      .click(data, function(event) {
-        event.data.index = event.data.spans.index($(this).nextAll("span.buyer-info"));
-        removeHighlight(event.data.spans);
-        highlight(event.data.spans.get(event.data.index));
-        copyToClipboard(event.data.spans.get(event.data.index));
-      });
+    if(!jQuery._data($("#fulfillment-overlay b.buyer-info"), "events")) {
+      $("#fulfillment-overlay b.buyer-info")
+        .click(data, function (event) {
+          setInputHandlers($("input"), data);
+          event.data.index = event.data.spans.index($(this).nextAll("span.buyer-info"));
+          removeHighlight(event.data.spans);
+          highlight(event.data.spans.get(event.data.index));
+          copyToClipboard(event.data.spans.get(event.data.index));
+        });
+    }
+
+    /* Dropdown menus */
+    // Selects the right option for dropdown menus
+    setDropdownSelections(response.order_data);
+
+
     // Change the text of the button to indicate that everything is ready to go
+    setTimeout(function() {
+      $("#fulfillment-overlay button").text("Start copy combo!");
+    }, 2500);
 
     /* Keyboard shortcuts */
     var altDown = false;
@@ -186,15 +215,14 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
       else if(event.altDown && event.keyCode == 81) {
         console.log("ALT+Q keybind!"); // doesn't work! :(
       }
-      console.log(event.keyCode);
+      //console.log(event.keyCode);
     });
     $(document).keyup(altDown, function(event) {
       if(event.keyCode == 18) {
         event.altDown = false;
       }
-      console.log(event.keyCode);
+      //console.log(event.keyCode);
     });
 
-    $("#fulfillment-overlay button").text("Start copy combo!");
   });
 });
