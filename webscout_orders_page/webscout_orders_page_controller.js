@@ -9,8 +9,10 @@ function create_fulfill_links(grid_data){
     var data_uid = $(this).closest('tr').attr('data-uid');
     var source_link = $(this).attr('href');
 
+    console.log("DATA_UID: " );
     console.log(data_uid);
     var data_row = _.find(grid_data, function(row){
+      console.log("UID: ");
       console.log(row['uid']);
       return data_uid === row["uid"];
     });
@@ -61,6 +63,7 @@ window.addEventListener("message", function(event) {
     console.log("Content script received: " + event.data.event_type);
 
     if(event.data.event_type === "kendo_grid_databound"){
+      console.log("GRID DATA: ");
       console.log(event.data.grid_data);
       create_fulfill_links(event.data.grid_data);
     }
