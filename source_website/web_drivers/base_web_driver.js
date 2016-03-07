@@ -10,12 +10,30 @@ function BaseWebDriver(){
   this.dataFields = null;
   this.dataLabels = null;
   this.copyCombo = null;
-  this.payload = { webDriver:this }
 }
 
 
-/** ------------- Property manipulation ------------- **/
+/** ------------- Main ------------- **/
+BaseWebDriver.prototype.mainInit = function(body, response) {
+  if($("#fulfillment-overlay").length == 0) {
+    this.insert_overlay(body, response.order_data);
+  }
 
+  // Cache jQuery selectors
+  this.cacheFieldsJQ();
+  this.cacheLabelsJQ();
+  this.cacheCopyComboJQ();
+  this.cacheOverlayJQ();
+
+  // Initialize handlers
+  var payload = { webDriver: this };
+  this.initCopyComboHandler(payload);
+  this.initClickToCopyHandlers(payload);
+  //this.initInputHandlers; This is done inside click handlers
+};
+
+
+/** ------------- Property manipulation ------------- **/
 /* Index */
 // Change the index, highlight accordingly, and copy the new data (if any)
 BaseWebDriver.prototype.setIndex = function(newIndex) {
@@ -48,7 +66,6 @@ BaseWebDriver.prototype.setIndex = function(newIndex) {
     return false;
   }
 };
-
 BaseWebDriver.prototype.indexInRange = function(index) {
   if(typeof index == "number") {
     return index >= 0 && index < this.dataFields.length
@@ -57,25 +74,25 @@ BaseWebDriver.prototype.indexInRange = function(index) {
     return this._index >= 0 && this._index < this.dataFields.length
   }
 };
-
 BaseWebDriver.prototype.incrementIndex = function() { this.setIndex(this._index + 1) };
 BaseWebDriver.prototype.decrementIndex = function() { this.setIndex(this._index - 1) };
 BaseWebDriver.prototype.getIndex = function() { return this._index };
-/* END */
+
 
 /* Fields and labels */
-BaseWebDriver.prototype.initFields = function() { this.dataFields = $("#fulfillment-overlay").find("span.buyer-info") };
-BaseWebDriver.prototype.initLabels = function() { this.dataLabels = $("#fulfillment-overlay").find("b.buyer-info") };
-/* END */
+BaseWebDriver.prototype.cacheFieldsJQ = function() { this.dataFields = $("#fulfillment-overlay").find("span.buyer-info") };
+BaseWebDriver.prototype.cacheLabelsJQ = function() { this.dataLabels = $("#fulfillment-overlay").find("b.buyer-info") };
+
 
 /* Copy combo */
-BaseWebDriver.prototype.initCopyCombo = function() {
+BaseWebDriver.prototype.cacheCopyComboJQ = function() {
   this.copyCombo = $("#copy-combo");
 };
-/* END */
+
 
 /* Overlay */
-BaseWebDriver.prototype.insert_overlay = function(body, order_data){
+BaseWebDriver.prototype.cacheOverlayJQ = function() { this.overlay = $("#fulfillment-overlay") };
+BaseWebDriver.prototype.insert_overlay = function(body, order_data) {
   var shipping_fields = _.pick(order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
 
   shipping_fields.quantity = order_data.quantity * order_data.aoi_quantity;
@@ -116,18 +133,10 @@ BaseWebDriver.prototype.insert_overlay = function(body, order_data){
   html.css('left', newLeft);
   html.css('width', newWidth);
   html.prepend(overlay);
-
-  // Cache jQuery selectors
-  this.initFields();
-  this.initLabels();
-  this.initCopyCombo();
-  this.overlay = $("#fulfillment-overlay");
 };
-/* END */
 
 
 /** ------------- Handlers ------------- **/
-
 /* Input */
 BaseWebDriver.prototype.inputClick = function(event) {
   if(event.data.webDriver.indexInRange()) {
@@ -135,7 +144,6 @@ BaseWebDriver.prototype.inputClick = function(event) {
     event.data.webDriver.incrementIndex();
   }
 };
-
 BaseWebDriver.prototype.initInputHandlers = function(payload) {
   // Only add handler if the input doesn't have one yet
   jQuery.each($("input"), function(index, input) {
@@ -145,7 +153,6 @@ BaseWebDriver.prototype.initInputHandlers = function(payload) {
     }
   });
 };
-/* END */
 
 /* Copy combo */
 BaseWebDriver.prototype.copyComboClick = function(event) {
@@ -161,36 +168,35 @@ BaseWebDriver.prototype.initCopyComboHandler = function(payload) {
     console.log("event added to copy combo button");
   }
 };
-/* END */
 
 /* Click to copy */
 BaseWebDriver.prototype.dataFieldsClick = function(event) {
   event.data.webDriver.initInputHandlers(event.data);
   event.data.webDriver.setIndex(this);
+  event.data.webDriver.copyCombo.text("Restart copy combo!");
   console.log("clicked field");
 };
 BaseWebDriver.prototype.dataLabelsClick = function(event) {
   event.data.webDriver.initInputHandlers(event.data);
   event.data.webDriver.setIndex(this);
+  event.data.webDriver.copyCombo.text("Restart copy combo!");
   console.log("clicked label");
 };
 BaseWebDriver.prototype.initClickToCopyHandlers = function(payload) {
   // Data fields handler
   jQuery.each(payload.webDriver.dataFields, function(index, dataField) {
     if (!jQuery._data(dataField, "events")) {
-      $(dataField).click(payload, payload.webDriver.dataFieldsClick)
+      $(dataField).click(payload, payload.webDriver.dataFieldsClick);
     }
   });
   // Data labels handler
   jQuery.each(payload.webDriver.dataLabels, function(index, dataLabel) {
     if (!jQuery._data(dataLabel, "events")) {
-      $(dataLabel).click(payload, payload.webDriver.dataLabelsClick)
+      $(dataLabel).click(payload, payload.webDriver.dataLabelsClick);
     }
   });
 };
-/* END */
 
 /* Dropdown */
-BaseWebDriver.prototype.setDropdownSelections = function(webDriver) {};
-/* END */
+BaseWebDriver.prototype.setDropdownSelections = function(webDriver) { console.log("base dropdown") };
 

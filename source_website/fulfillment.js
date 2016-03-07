@@ -18,7 +18,16 @@ function extractDomain(url) {
 }
 
 function getWebDriver(source_domain){
-  return new BaseWebDriver();
+  console.log(source_domain);
+  var webDriver = _.find(webDrivers, function(object) {
+    return object.host == source_domain;
+  }).getWebDriver();
+  if(!webDriver) {
+    return new BaseWebDriver();
+  }
+  else {
+    return webDriver;
+  }
 }
 
 function copyToClipboard(elem) {
@@ -85,29 +94,6 @@ function removeHighlight(elem) {
   $(elem).css("background-color", "");
 }
 
-/* Input .click handlers */
-// Add .click handler with payload to inputs if they don't have any yet
-function setInputHandlers(inputs, data) {
-  jQuery.each($(inputs), function(index, value) {
-    if(!jQuery._data(value, "events")) {
-      console.log("event added");
-      $(value)
-        .click(data, function (event) {
-          console.log("clicked " + event.data.index);
-          // Only change input values if copy combo or a span has been clicked
-          if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-            copyToClipboard($(event.data.spans).get(event.data.index));
-            pasteStringInElem(this);
-            // Remove previous span highlight and get the next one ready
-            removeHighlight($(event.data.spans).get(event.data.index));
-            event.data.index += 1;
-            highlight($(event.data.spans).get(event.data.index));
-          }
-      });
-    }
-  });
-}
-
 function pasteStringInElem(elem){
   $(elem).select();
   if(document.execCommand('paste')){
@@ -126,55 +112,26 @@ function pasteStringInElem(elem){
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
     console.log("MESSAGE RECEIVED");
-    //get web driver for this domain
-    var web_driver = getWebDriver(extractDomain(window.location.href));
 
+    // Get web driver for this domain
+    // var web_driver = getWebDriver(extractDomain(window.location.href));
+    var web_driver = getWebDriver(response.order_data.domain_host);
+    //var payload = { webDriver: web_driver };
+
+    web_driver.mainInit(body, response);
     /* Fulfillment overlay */
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
-    if($("#fulfillment-overlay").length == 0) {
-      web_driver.insert_overlay(body, response.order_data);
-    }
-
-    // Prep payload for future .click events
-    var copy_index = -1;
-    var spans = web_driver.dataFields;
-    var data = {index:copy_index, spans:spans};
+    //if($("#fulfillment-overlay").length == 0) {
+    //  web_driver.insert_overlay(body, response.order_data);
+    //}
 
     /* Copy combo handler */
-    web_driver.initCopyComboHandler(web_driver.payload);
-    web_driver.initClickToCopyHandlers(web_driver.payload);
-    console.log($(web_driver.dataLabels.get(1)).prop("tagName"));
-    console.log(typeof web_driver.getIndex() == "object");
+    //web_driver.initCopyComboHandler(payload);
+    //web_driver.initClickToCopyHandlers(payload);
+    console.log(web_driver.constructor);
+    console.log(web_driver);
 
-    /* Click to copy functionality */
-    // Add .click callback for spans
-    //if(!jQuery._data($("#fulfillment-overlay span.buyer-info"), "events")) {
-    //  $("#fulfillment-overlay span.buyer-info")
-    //    .click(data, function (event) {
-    //      setInputHandlers($("input"), data);
-    //      event.data.index = event.data.spans.index(this);
-    //      removeHighlight(event.data.spans);
-    //      highlight(this);
-    //      copyToClipboard(this);
-    //    });
-    //}
-
-    // Add .click callback for labels
-    //if(!jQuery._data($("#fulfillment-overlay b.buyer-info"), "events")) {
-    //  $("#fulfillment-overlay b.buyer-info")
-    //    .click(data, function (event) {
-    //      setInputHandlers($("input"), data);
-    //      event.data.index = event.data.spans.index($(this).nextAll("span.buyer-info"));
-    //      removeHighlight(event.data.spans);
-    //      highlight(event.data.spans.get(event.data.index));
-    //      copyToClipboard(event.data.spans.get(event.data.index));
-    //    });
-    //}
-
-    /* Dropdown menus */
-    // Selects the right option for dropdown menus
     setDropdownSelections(response.order_data);
-
 
     // Change the text of the button to indicate that everything is ready to go
     setTimeout(function() {
