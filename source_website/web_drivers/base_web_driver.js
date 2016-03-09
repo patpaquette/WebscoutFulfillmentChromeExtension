@@ -75,18 +75,17 @@ function BaseWebDriver(domain_host){
   var that = this;
   this.domain_host = domain_host;
   this.page_type = null;
-  this.fulfillment_data = null;
-  this.page_type_fulfillment_data = null;
-  this.fulfillment_data_p = null;
+  this.page_type_data = null;
+  this.page_type_data_p = null;
 
-  this._fetch_fulfillment_data(domain_host)
-    .then(function(fulfillment_data){
-      that._resolve_page_type(fulfillment_data);
+  this._fetch_source_data(domain_host)
+    .then(function(source_data){
+      that._resolve_page_type(source_data);
     });
 }
 
-BaseWebDriver.prototype._fetch_fulfillment_data = function(domain_host){
-  this.fulfillment_data_p = Q.Promise(function(resolve, reject, notify){
+BaseWebDriver.prototype._fetch_source_data = function(domain_host){
+  this.page_type_data_p = Q.Promise(function(resolve, reject, notify){
     $.get(backend_api_endpoint + "/model/domains/" + domain_host + "/get_fulfillment_selectors", function(body){
       var data = body.data;
       console.log(data);
@@ -94,20 +93,20 @@ BaseWebDriver.prototype._fetch_fulfillment_data = function(domain_host){
     });
   });
 
-  return this.fulfillment_data_p;
+  return this.page_type_data_p;
 }
 
-BaseWebDriver.prototype._resolve_page_type = function(fulfillment_data){
+BaseWebDriver.prototype._resolve_page_type = function(source_data){
   var url = document.location.href;
   var that = this;
 
-  _.some(fulfillment_data, function(page_type_data){
+  _.some(source_data, function(page_type_data){
     return _.some(page_type_data["domainPageTypeMatches"], function(match_regex_data){
       var match_regex = match_regex_data["match_regex"]
 
       if(url.match(match_regex)){
         that.page_type = page_type_data["page_type"];
-        that.page_type_fulfillment_data = page_type_data;
+        that.page_type_data = page_type_data;
         return true;
       }
 
@@ -120,7 +119,7 @@ BaseWebDriver.prototype._resolve_page_type = function(fulfillment_data){
 
 BaseWebDriver.prototype.ready = function(callback){
   console.log("called base ready");
-  this.fulfillment_data_p.then(function(){
+  this.page_type_data_p.then(function(){
     callback();
   });
 }
@@ -172,11 +171,11 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
   console.log("value : " + value);
   copyToClipboard($("<span>" + value + "</span>").get(0));
 
-  if(!that.page_type_fulfillment_data){
+  if(!that.page_type_data){
     throw new Error("fulfillment data not available");
   }
 
-  var field_autofill_data = _.filter(that.page_type_fulfillment_data["domainPageTypeSelectors"], function(autofulfill_data){
+  var field_autofill_data = _.filter(that.page_type_data["domainPageTypeSelectors"], function(autofulfill_data){
     return autofulfill_data["field"] == field;
   });
 
