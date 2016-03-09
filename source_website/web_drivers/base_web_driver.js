@@ -126,7 +126,8 @@ BaseWebDriver.prototype.insert_overlay = function(body, order_data) {
     var value = shipping_fields[key];
 
     if(value){
-      web_driver.set_field_value(field_name, shipping_fields[key]);
+      console.log(this);
+      this.set_field_value(field_name, shipping_fields[key]);
     }
   });
 
@@ -185,7 +186,7 @@ BaseWebDriver.prototype._resolve_page_type = function(fulfillment_data){
 
   _.some(fulfillment_data, function(page_type_data){
     return _.some(page_type_data["domainPageTypeMatches"], function(match_regex_data){
-      var match_regex = match_regex_data["match_regex"]
+      var match_regex = match_regex_data["match_regex"];
 
       if(url.match(match_regex)){
         that.page_type = page_type_data["page_type"];
@@ -204,6 +205,57 @@ BaseWebDriver.prototype.ready = function(callback){
   console.log("called base ready");
   this.fulfillment_data_p.then(function(){
     callback();
+  });
+};
+
+//provision source page with extra code (ex. event listeners)
+BaseWebDriver.prototype.provision = function(){
+
+};
+
+//set field selector
+BaseWebDriver.prototype.set_field_value = function(field, value){
+  var success = false;
+  var that = this;
+
+  console.log("value : " + value);
+  copyToClipboard($("<span>" + value + "</span>").get(0));
+
+  if(!that.page_type_fulfillment_data){
+    throw new Error("fulfillment data not available");
+  }
+
+  var field_autofill_data = _.filter(that.page_type_fulfillment_data["domainPageTypeSelectors"], function(autofulfill_data){
+    return autofulfill_data["field"] == field;
+  });
+
+  _.each(field_autofill_data, function(field_autofill_selector_data){
+    var selector = field_autofill_selector_data["selector"];
+    var selector_type = field_autofill_selector_data["selector_type"];
+
+    if(selector_type === 'css'){
+      console.log(selector);
+      var matches = $(selector);
+
+      console.log(matches);
+      if(matches.length > 0){
+        success = true;
+        pasteStringInElem(matches.get(0));
+      }
+    }
+  });
+
+  return success;
+};
+
+//set page type match regex
+BaseWebDriver.prototype.add_page_type_match_regex = function(match_regex){
+  var that = this;
+
+  return Q.promise(function(resolve, reject){
+    $.post(backend_api_endpoint + "/model/domains/" + domain_host + "/add_page_type_match", {page_type: page_type, match_regex: match_regex}, function(body){
+      resolve();
+    });
   });
 };
 
@@ -277,56 +329,6 @@ BaseWebDriver.prototype.setDropdownSelections = function(order_data) {
 };
 
 /** ------------- Utility ------------- **/
-//provision source page with extra code (ex. event listeners)
-BaseWebDriver.prototype.provision = function(){
-
-};
-
-//set field selector
-BaseWebDriver.prototype.set_field_value = function(field, value){
-  var success = false;
-  var that = this;
-
-  console.log("value : " + value);
-  copyToClipboard($("<span>" + value + "</span>").get(0));
-
-  if(!that.page_type_fulfillment_data){
-    throw new Error("fulfillment data not available");
-  }
-
-  var field_autofill_data = _.filter(that.page_type_fulfillment_data["domainPageTypeSelectors"], function(autofulfill_data){
-    return autofulfill_data["field"] == field;
-  });
-
-  _.each(field_autofill_data, function(field_autofill_selector_data){
-    var selector = field_autofill_selector_data["selector"];
-    var selector_type = field_autofill_selector_data["selector_type"];
-
-    if(selector_type === 'css'){
-      console.log(selector);
-      var matches = $(selector);
-
-      console.log(matches);
-      if(matches.length > 0){
-        success = true;
-        pasteStringInElem(matches.get(0));
-      }
-    }
-  });
-
-  return success;
-};
-
-//set page type match regex
-BaseWebDriver.prototype.add_page_type_match_regex = function(match_regex){
-  var that = this;
-
-  return Q.promise(function(resolve, reject){
-    $.post(backend_api_endpoint + "/model/domains/" + domain_host + "/add_page_type_match", {page_type: page_type, match_regex: match_regex}, function(body){
-      resolve();
-    });
-  });
-};
 
 function copyToClipboard(elem) {
   // Create hidden text element, if it doesn't already exist
