@@ -3,6 +3,10 @@
     #fulfillment-overlay {font-size:14px}
     #fulfillment-overlay {letter-spacing:0.1px}
     #fulfillment-overlay {line-height:1}
+
+    .success {
+        background-color: lawngreen;
+    }
 </style>
 
 <div id="fulfillment-overlay" style="display:block;position:fixed;top:0px;left:0px;width:250px;height:100%;z-index:99999;padding: 5px; color: black; background-color: lightgrey; text-align: left; float: left;">
@@ -14,38 +18,38 @@
 
     <p>
         <b class="buyer-info">Quantity</b> :
-        <span class="buyer-info">{{quantity}}</span>
+        <span class="buyer-info" field-name="quantity">{{quantity}}</span>
     </p>
 
     <p>
         <b class="buyer-info">First Name</b><br/>
-        <span class="buyer-info">{{first_name}}</span>
+        <span class="buyer-info" field-name="firstname">{{first_name}}</span>
     </p>
 
     <p>
         <b class="buyer-info">Last Name</b><br/>
-        <span class="buyer-info">{{last_name}}</span>
+        <span class="buyer-info" field-name="lastname">{{last_name}}</span>
     </p>
 
     <p>
         <b class="buyer-info">Street Address</b><br/>
-        <span class="buyer-info">{{shipping_address_line_1}}</span><br/>
+        <span class="buyer-info" field-name="address">{{shipping_address_line_1}}</span><br/>
         {{#if shipping_address_line_2}}
-        <span class="buyer-info">{{shipping_address_line_2}}</span><br/>
+        <span class="buyer-info" field-name="address">{{shipping_address_line_2}}</span><br/>
         {{/if}}
         {{#if shipping_address_line_3}}
-        <span class="buyer-info">{{shipping_address_line_2}}</span>
+        <span class="buyer-info" field-name="address">{{shipping_address_line_2}}</span>
         {{/if}}
     </p>
 
     <p>
         <b class="buyer-info">City</b><br/>
-        <span class="buyer-info">{{shipping_city}}</span>
+        <span class="buyer-info" field-name="city">{{shipping_city}}</span>
     </p>
 
     <p>
         <b class="buyer-info">State</b><br/>
-        <span class="buyer-info">{{shipping_state}}</span>
+        <span class="buyer-info" field-name="state">{{shipping_state}}</span>
     </p>
 
     <!--<p>-->
@@ -55,12 +59,12 @@
     <!---->
     <p>
         <b class="buyer-info">Phone</b><br/>
-        <span class="buyer-info">{{shipping_phone}}</span>
+        <span class="buyer-info" field-name="phone">{{shipping_phone}}</span>
     </p>
 
     <p>
         <b class="buyer-info">Postal Code</b><br/>
-        <span class="buyer-info">{{shipping_postal_code}}</span>
+        <span class="buyer-info" field-name="postal_code">{{shipping_postal_code}}</span>
     </p>
 
     <TEXTAREA ID="holdtext" STYLE="display:none;">

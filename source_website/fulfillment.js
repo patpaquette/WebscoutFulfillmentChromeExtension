@@ -84,6 +84,10 @@ function copyToClipboard(elem) {
   return succeed;
 }
 
+function fill_input_success(field_name){
+  $("span[field-name=" + field_name + "]").addClass('success');
+}
+
 function highlight(elem) {
   $(elem).css("background-color", "yellow");
 }
@@ -121,17 +125,21 @@ $(document).ready(function(){
           shipping_fields.last_name = split_name.splice(1).join(' ');
           var shipping_fields_map = {"first_name": "firstname", "last_name": "lastname", "shipping_address_line_1": "address", "shipping_city": "city", "shipping_state": "state", "shipping_postal_code": "postal_code", "shipping_phone": "phone"};
 
+          var overlay_template = Handlebars.compile(body);
+          var overlay_html = overlay_template(shipping_fields);
+          web_driver.insert_overlay(overlay_html);
+
           _.each(shipping_fields_map, function(field_name, key){
             var value = shipping_fields[key];
 
             if(value){
-              web_driver.set_field_value(field_name, shipping_fields[key]);
+              var success = web_driver.set_field_value(field_name, shipping_fields[key]);
+
+              if(success){
+                fill_input_success(field_name);
+              }
             }
           });
-
-          var overlay_template = Handlebars.compile(body);
-          var overlay_html = overlay_template(shipping_fields);
-          web_driver.insert_overlay(overlay_html);
         }
 
         // Prep payload for future .click events
@@ -143,11 +151,11 @@ $(document).ready(function(){
         // Add .click handler with payload to all inputs
         $("input")
           .click(data, function (event) {
-            console.log("clicked");
             // Only change input values if copy combo or a span has been clicked
-            console.log(event.data.index);
             if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-              //$(this).attr("value", $($(event.data.spans).get(event.data.index)).text());
+              var field_name = event.data.spans[event.data.index].getAttribute('field-name');
+              fill_input_success(field_name);
+
               copyToClipboard($(event.data.spans).get(event.data.index));
               pasteStringInElem(this);
               console.log(event.data.index);
@@ -163,6 +171,7 @@ $(document).ready(function(){
           .click(data, function(event) {
             // Reset highlights and index every time the copy combo button is clicked
             event.data.index = 0;
+            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
             removeHighlight(event.data.spans);
             highlight(event.data.spans.get(0));
             copyToClipboard(event.data.spans.get(0));
@@ -174,6 +183,7 @@ $(document).ready(function(){
         // Add .click callback for spans
         $("#fulfillment-overlay span.buyer-info")
           .click(data, function(event) {
+            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
             event.data.index = event.data.spans.index(this);
             removeHighlight(event.data.spans);
             highlight(this);

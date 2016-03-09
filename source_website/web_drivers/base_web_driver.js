@@ -164,7 +164,7 @@ BaseWebDriver.prototype.provision = function(){
 
 }
 
-//set field selector
+//set field value
 BaseWebDriver.prototype.set_field_value = function(field, value){
   var success = false;
   var that = this;
