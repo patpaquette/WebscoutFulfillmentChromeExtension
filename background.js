@@ -37,9 +37,12 @@ function injectExtensionScripts(module, tabId, callback){
       var js_includes = [
         "bower_components/lodash/lodash.js",
         "bower_components/jquery/dist/jquery.js",
-        "source_website/fulfillment.js",
+        "bower_components/q/q.js",
         "bower_components/handlebars/handlebars.js",
-        "source_website/web_drivers/base_web_driver.js"
+        "bower_components/async/dist/async.js",
+        "source_website/fulfillment.js",
+        "source_website/web_drivers/base_web_driver.js",
+        "source_website/web_drivers/walmart_web_driver.js"
       ];
 
       executeScripts(js_includes, tabId, callback);
