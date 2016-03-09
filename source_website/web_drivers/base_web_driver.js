@@ -10,13 +10,17 @@ function BaseWebDriver(){
   this.dataFields = null;
   this.dataLabels = null;
   this.copyCombo = null;
+
+  this.orderData = null;
 }
 
 
 /** ------------- Main ------------- **/
 BaseWebDriver.prototype.mainInit = function(body, response) {
+  this.orderData = response.order_data;
+
   if($("#fulfillment-overlay").length == 0) {
-    this.insert_overlay(body, response.order_data);
+    this.insert_overlay(body, this.orderData);
   }
 
   // Cache jQuery selectors
@@ -157,12 +161,14 @@ BaseWebDriver.prototype.initInputHandlers = function(payload) {
 /* Copy combo */
 BaseWebDriver.prototype.copyComboClick = function(event) {
   event.data.webDriver.initInputHandlers(event.data);
+  event.data.webDriver.setDropdownSelections(event.data.webDriver.orderData);
   event.data.webDriver.setIndex(0);
   event.data.webDriver.copyCombo.text("Restart copy combo!");
 };
 
 BaseWebDriver.prototype.initCopyComboHandler = function(payload) {
   // Only add handler if the button doesn't have one yet
+  console.log(payload.webDriver.copyCombo);
   if(!jQuery._data(payload.webDriver.copyCombo, "events")) {
     payload.webDriver.copyCombo.click(payload, payload.webDriver.copyComboClick);
     console.log("event added to copy combo button");
@@ -198,5 +204,7 @@ BaseWebDriver.prototype.initClickToCopyHandlers = function(payload) {
 };
 
 /* Dropdown */
-BaseWebDriver.prototype.setDropdownSelections = function(webDriver) { console.log("base dropdown") };
+BaseWebDriver.prototype.setDropdownSelections = function(order_data) {
+  console.log("base dropdown")
+};
 

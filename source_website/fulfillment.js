@@ -21,12 +21,12 @@ function getWebDriver(source_domain){
   console.log(source_domain);
   var webDriver = _.find(webDrivers, function(object) {
     return object.host == source_domain;
-  }).getWebDriver();
+  });
   if(!webDriver) {
     return new BaseWebDriver();
   }
   else {
-    return webDriver;
+    return webDriver.getWebDriver();
   }
 }
 
@@ -108,30 +108,20 @@ function pasteStringInElem(elem){
 //  console.log("new index: " + index);
 //  highlight
 //}
+var web_driver;
 
 chrome.runtime.sendMessage({get_order_data: true}, function(response){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
     console.log("MESSAGE RECEIVED");
 
     // Get web driver for this domain
-    // var web_driver = getWebDriver(extractDomain(window.location.href));
-    var web_driver = getWebDriver(response.order_data.domain_host);
-    //var payload = { webDriver: web_driver };
-
-    web_driver.mainInit(body, response);
-    /* Fulfillment overlay */
-    // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
-    //if($("#fulfillment-overlay").length == 0) {
-    //  web_driver.insert_overlay(body, response.order_data);
-    //}
-
-    /* Copy combo handler */
-    //web_driver.initCopyComboHandler(payload);
-    //web_driver.initClickToCopyHandlers(payload);
-    console.log(web_driver.constructor);
     console.log(web_driver);
+    //console.log(!web_driver);
+    if(!web_driver) {
+      web_driver = getWebDriver(response.order_data.domain_host);
+      web_driver.mainInit(body, response);
+    }
 
-    setDropdownSelections(response.order_data);
 
     // Change the text of the button to indicate that everything is ready to go
     setTimeout(function() {
@@ -139,23 +129,23 @@ chrome.runtime.sendMessage({get_order_data: true}, function(response){
     }, 2500);
 
     /* Keyboard shortcuts */
-    var altDown = false;
-
-    $(document).keydown(altDown, function(event) {
-      if(event.keyCode == 18) {
-        event.altDown = true;
-      }
-      else if(event.altDown && event.keyCode == 81) {
-        console.log("ALT+Q keybind!"); // doesn't work! :(
-      }
-      //console.log(event.keyCode);
-    });
-    $(document).keyup(altDown, function(event) {
-      if(event.keyCode == 18) {
-        event.altDown = false;
-      }
-      //console.log(event.keyCode);
-    });
+    //var altDown = false;
+    //
+    //$(document).keydown(altDown, function(event) {
+    //  if(event.keyCode == 18) {
+    //    event.altDown = true;
+    //  }
+    //  else if(event.altDown && event.keyCode == 81) {
+    //    console.log("ALT+Q keybind!"); // doesn't work! :(
+    //  }
+    //  //console.log(event.keyCode);
+    //});
+    //$(document).keyup(altDown, function(event) {
+    //  if(event.keyCode == 18) {
+    //    event.altDown = false;
+    //  }
+    //  //console.log(event.keyCode);
+    //});
 
   });
 });

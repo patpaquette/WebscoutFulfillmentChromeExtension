@@ -37,11 +37,12 @@ function injectExtensionScripts(module, tabId, callback){
       var js_includes = [
         "bower_components/lodash/lodash.js",
         "bower_components/jquery/dist/jquery.js",
+        "source_website/dropdown.js",
         "source_website/web_drivers/base_web_driver.js",
+        "source_website/web_drivers/toysrus_web_driver.js",
         "source_website/web_drivers/walmart_web_driver.js",
         "source_website/web_drivers/all_web_drivers.js",
         "source_website/fulfillment.js",
-        "source_website/dropdown.js",
         "bower_components/handlebars/handlebars.js"
       ];
 
