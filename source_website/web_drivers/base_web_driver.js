@@ -171,8 +171,9 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
   console.log("value : " + value);
   copyToClipboard($("<span>" + value + "</span>").get(0));
 
+  //check if page type data (i.e. field selectors)
   if(!that.page_type_data){
-    throw new Error("fulfillment data not available");
+    return false;
   }
 
   var field_autofill_data = _.filter(that.page_type_data["domainPageTypeSelectors"], function(autofulfill_data){

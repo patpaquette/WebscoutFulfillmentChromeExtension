@@ -23,9 +23,15 @@ function extractDomain(url) {
 }
 
 function getWebDriver(source_domain){
-  var capitalized_domain = source_domain.charAt(0).toUpperCase() + source_domain.slice(1);
-  eval("var web_driver = new " + capitalized_domain + "WebDriver()");
-  return web_driver;
+  try{
+    var capitalized_domain = source_domain.charAt(0).toUpperCase() + source_domain.slice(1);
+    eval("var web_driver = new " + capitalized_domain + "WebDriver()");
+
+    return web_driver;
+  }
+  catch(e){
+    return new BaseWebDriver(source_domain);
+  }
 }
 
 function copyToClipboard(elem) {
@@ -112,6 +118,7 @@ $(document).ready(function(){
   var web_driver = getWebDriver(extractDomain(window.location.href));
 
   web_driver.ready(function(){
+    console.log("is ready");
     chrome.runtime.sendMessage({get_order_data: true}, function(response){
       $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
         /* Fulfillment overlay */
