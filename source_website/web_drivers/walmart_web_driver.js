@@ -11,6 +11,7 @@ WalmartWebDriver.prototype.ready = function(callback){
   var that = this;
 
   function is_ready(){
+    console.log("checking if ready");
     switch(that.page_type){
       case "shipping":
         var elements = $(".checkout-address-book #COAC2ShpAddrFirstName")
@@ -27,7 +28,7 @@ WalmartWebDriver.prototype.ready = function(callback){
   BaseWebDriver.prototype.ready.call(this, function(){
     var count = 0;
     async.until(function(){
-      return is_ready() || ++count > 10;
+      return is_ready();
     }, function(done){
       setTimeout(function(){
         done();
