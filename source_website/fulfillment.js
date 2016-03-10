@@ -112,9 +112,20 @@ function pasteStringInElem(elem){
   }
 }
 
+function save_element_selector(web_driver, element, page_type, field){
+  var id = element.getAttribute('id');
+  var selector = "#" + id;
+
+  if(id){
+    return web_driver.add_page_type_field_selector(page_type, field, selector, 'css');
+  }
+}
+
 
 //get web driver for this domain
 $(document).ready(function(){
+  var field_to_page_type_map = { "firstname": "shipping", "lastname": "shipping", "address": "shipping", "city": "shipping", "state": "shipping", "postal_code": "shipping", "phone": "shipping", "quantity": "product"};
+
   var web_driver = getWebDriver(extractDomain(window.location.href));
 
   web_driver.ready(function(){
@@ -170,11 +181,15 @@ $(document).ready(function(){
               removeHighlight($(event.data.spans).get(event.data.index));
               event.data.index += 1;
               highlight($(event.data.spans).get(event.data.index));
+
+              if(record_selectors){
+                save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+              }
             }
           });
 
         /* Copy combo handler */
-        $("#fulfillment-overlay button")
+        $("#fulfillment-overlay button#copy-combo")
           .click(data, function(event) {
             // Reset highlights and index every time the copy combo button is clicked
             event.data.index = 0;
@@ -190,6 +205,7 @@ $(document).ready(function(){
         // Add .click callback for spans
         $("#fulfillment-overlay span.buyer-info")
           .click(data, function(event) {
+            $(this).removeClass('success');
             event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
             event.data.index = event.data.spans.index(this);
             removeHighlight(event.data.spans);
@@ -206,6 +222,20 @@ $(document).ready(function(){
             copyToClipboard(event.data.spans.get(event.data.index));
           });
         // Change the text of the button to indicate that everything is ready to go
+
+        /* Selector recording */
+        var record_selectors = false;
+        $("#selector-recording-toggle")
+          .click(function(){
+            record_selectors = !record_selectors;
+
+            if(record_selectors){
+              $(this).text("Turn off selector recording");
+            }
+            else{
+              $(this).text("Turn on selector recording");
+            }
+          });
 
         /* Keyboard shortcuts */
         var altDown = false;
@@ -226,7 +256,7 @@ $(document).ready(function(){
           console.log(event.keyCode);
         });
 
-        $("#fulfillment-overlay button").text("Start copy combo!");
+        $("#fulfillment-overlay button#copy-combo").text("Start copy combo!");
       });
     });
   });

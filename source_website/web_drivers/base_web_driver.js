@@ -77,6 +77,7 @@ function BaseWebDriver(domain_host){
   this.page_type = null;
   this.page_type_data = null;
   this.page_type_data_p = null;
+  this.source_data = null;
 
   this._fetch_source_data(domain_host)
     .then(function(source_data){
@@ -85,10 +86,13 @@ function BaseWebDriver(domain_host){
 }
 
 BaseWebDriver.prototype._fetch_source_data = function(domain_host){
+  var that = this;
+
   this.page_type_data_p = Q.Promise(function(resolve, reject, notify){
     $.get(backend_api_endpoint + "/model/domains/" + domain_host + "/get_fulfillment_selectors", function(body){
       var data = body.data;
       console.log(data);
+      that.source_data = data;
       resolve(data);
     });
   });
@@ -165,46 +169,65 @@ BaseWebDriver.prototype.provision = function(){
 
 //set field value
 BaseWebDriver.prototype.set_field_value = function(field, value){
-  var success = false;
   var that = this;
+  var selectors_data = [];
 
-  console.log("value : " + value);
-  copyToClipboard($("<span>" + value + "</span>").get(0));
-
-  //check if page type data (i.e. field selectors)
-  if(!that.page_type_data){
+  //check if we have selector data available
+  if(!that.page_type_data && !that.source_data){
     return false;
   }
+  else if(!that.page_type_data){ //page type isn't known, so try with all page types
+    selectors_data = _.reduce(that.source_data, function(result, page_type_data){
+      result.extend(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
+      return result;
+    }, []);
+  }
+  else{
+    selectors_data = _.filter(this.page_type_data["domainPageTypeSelectors"], {field: field});
+  }
 
-  var field_autofill_data = _.filter(that.page_type_data["domainPageTypeSelectors"], function(autofulfill_data){
-    return autofulfill_data["field"] == field;
-  });
+  var css_selectors = _(selectors_data).filter({selector_type: 'css'}).map('selector').value();
+  return this._fill_data_from_css_selectors(css_selectors, field, value);
+}
 
-  _.each(field_autofill_data, function(field_autofill_selector_data){
-    var selector = field_autofill_selector_data["selector"];
-    var selector_type = field_autofill_selector_data["selector_type"];
+BaseWebDriver.prototype._fill_data_from_css_selectors = function(selectors, field, value){
+  var success = false;
 
-    if(selector_type === 'css'){
-      console.log(selector);
-      var matches = $(selector);
+  copyToClipboard($("<span>" + value + "</span>").get(0));
 
-      console.log(matches);
-      if(matches.length > 0){
-        success = true;
-        pasteStringInElem(matches.get(0));
-      }
+  _.each(selectors, function(selector){
+    console.log(selector);
+    var matches = $(selector);
+
+    console.log(matches);
+    if(matches.length > 0){
+      success = true;
+      pasteStringInElem(matches.get(0));
     }
   });
 
   return success;
+
 }
 
 //set page type match regex
-BaseWebDriver.prototype.add_page_type_match_regex = function(match_regex){
+BaseWebDriver.prototype.add_page_type_match_regex = function(page_type, match_regex){
   var that = this;
 
   return Q.promise(function(resolve, reject){
     $.post(backend_api_endpoint + "/model/domains/" + domain_host + "/add_page_type_match", {page_type: page_type, match_regex: match_regex}, function(body){
+      resolve();
+    });
+  });
+}
+
+//set field selector
+BaseWebDriver.prototype.add_page_type_field_selector = function(page_type, field, selector, selector_type){
+  var that = this;
+
+  return Q.promise(function(resolve, reject){
+    $.post(backend_api_endpoint + "/model/domains/" + that.domain_host + "/add_page_type_selector", {page_type: page_type, field: field, selector: selector, selector_type: selector_type}, function(body){
+      console.log("yay!");
       resolve();
     });
   });
