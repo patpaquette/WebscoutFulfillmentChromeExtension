@@ -14,9 +14,9 @@ WalmartWebDriver.prototype.ready = function(callback){
     console.log("checking if ready");
     switch(that.page_type){
       case "shipping":
-        var elements = $(".checkout-address-book #COAC2ShpAddrFirstName")
+        var elements = $("section[data-view-name=shipping-address]")
           .filter(function(index, element){
-            return $(element).attr('style');
+            return $(element).hasClass('expanded');
           });
         return elements.length > 0;
     }
@@ -26,7 +26,6 @@ WalmartWebDriver.prototype.ready = function(callback){
 
 
   BaseWebDriver.prototype.ready.call(this, function(){
-    var count = 0;
     async.until(function(){
       return is_ready();
     }, function(done){
