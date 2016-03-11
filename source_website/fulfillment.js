@@ -141,21 +141,17 @@ $(document).ready(function(){
           var split_name = shipping_fields.shipping_name.split(" ");
           shipping_fields.first_name = split_name[0];
           shipping_fields.last_name = split_name.splice(1).join(' ');
-          var shipping_fields_map = {"first_name": "firstname", "last_name": "lastname", "shipping_address_line_1": "address", "shipping_city": "city", "shipping_state": "state", "shipping_postal_code": "postal_code", "shipping_phone": "phone"};
+          var fulfillment_fields_map = {"first_name": "firstname", "last_name": "lastname", "shipping_address_line_1": "address", "shipping_city": "city", "shipping_state": "state", "shipping_postal_code": "postal_code", "shipping_phone": "phone", "quantity": "quantity"};
 
           var overlay_template = Handlebars.compile(body);
           var overlay_html = overlay_template(shipping_fields);
           web_driver.insert_overlay(overlay_html);
 
-          _.each(shipping_fields_map, function(field_name, key){
+          _.each(fulfillment_fields_map, function(field_name, key){
             var value = shipping_fields[key];
 
             if(value){
-              var success = web_driver.set_field_value(field_name, shipping_fields[key]);
-
-              if(success){
-                fill_input_success(field_name);
-              }
+              web_driver.set_field_value(field_name, shipping_fields[key]) && fill_input_success(field_name);
             }
           });
         }

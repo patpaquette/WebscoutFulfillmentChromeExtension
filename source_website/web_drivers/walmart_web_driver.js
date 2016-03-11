@@ -2,11 +2,24 @@
  * Created by patricepaquette on 2016-03-08.
  */
 
+/** constructor **/
 function WalmartWebDriver(){
+  this._dropdown_resolvers = [walmart_chooser_dropdown_resolver];
+}
+
+/** helper function to have normalized states (required to check equality in dropdown values)**/
+function get_normalized_us_state(input){
+  var state_map = {"AL": "Alabama", "AK": "Alaska", "AS": "American Samoa", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "DC": "District Of Columbia", "FM": "Federated States Of Micronesia", "FL": "Florida", "GA": "Georgia", "GU": "Guam", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MH": "Marshall Islands", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "MP": "Northern Mariana Islands", "OH": "Ohio", "OK": "Oklahoma", "OR": "Oregon", "PW": "Palau", "PA": "Pennsylvania", "PR": "Puerto Rico", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VI": "Virgin Islands", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"};
+
+  if(input.length > 2){ return input.toLowerCase(); }
+  if(input.length < 2){ return null; }
+
+  return state_map[input.toUpperCase()].toLowerCase();
 }
 
 WalmartWebDriver.prototype = new BaseWebDriver('walmart');
 
+/** must override base method to add additional constraints for readiness **/
 WalmartWebDriver.prototype.ready = function(callback){
   var that = this;
 
@@ -37,7 +50,15 @@ WalmartWebDriver.prototype.ready = function(callback){
       callback();
     });
   });
+}
 
+/** override base method to parse input values **/
+WalmartWebDriver.prototype.set_field_value = function(field, value){
+  if(field === 'state'){
+    value = get_normalized_us_state(value);
+  }
+
+  return BaseWebDriver.prototype.set_field_value.call(this, field, value);
 }
 
 WalmartWebDriver.prototype._is_dropdown = function(element){
@@ -45,12 +66,19 @@ WalmartWebDriver.prototype._is_dropdown = function(element){
 }
 
 WalmartWebDriver.prototype._dropdown_resolver = function(element, value){
-  var that = this;
-  var shipping_state = this._get_normalized_us_state(value);
+  _.each(this._dropdown_resolvers, function(resolver){
+    resolver(element, value);
+  });
+}
 
+/**
+ * custom dropdown resolvers
+ * we allow more than one in case that there are different types within walmart
+ */
+function walmart_chooser_dropdown_resolver(element, value){
   $(element).find('button')
     .filter(function(){
-      return shipping_state === that._get_normalized_us_state($(this).text());
+      return value.toLowerCase() === $(this).text().toLowerCase();
     })
     .first()
     .trigger('click');
