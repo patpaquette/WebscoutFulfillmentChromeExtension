@@ -187,13 +187,12 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
   }
 
   var css_selectors = _(selectors_data).filter({selector_type: 'css'}).map('selector').value();
-  return this._fill_data_from_css_selectors(css_selectors, field, value);
+  return this._fill_data_from_css_selectors(css_selectors, value);
 }
 
-BaseWebDriver.prototype._fill_data_from_css_selectors = function(selectors, field, value){
+BaseWebDriver.prototype._fill_data_from_css_selectors = function(selectors, value){
   var success = false;
-
-  copyToClipboard($("<span>" + value + "</span>").get(0));
+  var that = this;
 
   _.each(selectors, function(selector){
     console.log(selector);
@@ -202,12 +201,40 @@ BaseWebDriver.prototype._fill_data_from_css_selectors = function(selectors, fiel
     console.log(matches);
     if(matches.length > 0){
       success = true;
-      pasteStringInElem(matches.get(0));
+      that._resolve_element_value(matches.get(0), value);
     }
   });
 
   return success;
+}
 
+BaseWebDriver.prototype._resolve_element_value = function(element, value){
+  if(this._is_text_input(element)){
+    this._text_input_resolver(element, value);
+  }
+  else if(this._is_dropdown(element)){
+    this._dropdown_resolver(element, value);
+  }
+}
+
+BaseWebDriver.prototype._is_text_input = function(element){
+  var text_input_types = ["text", "tel"];
+
+  return element.nodeName.toLowerCase() === 'input' && text_input_types.indexOf($(element).attr('type')) >= 0;
+}
+
+BaseWebDriver.prototype._is_dropdown = function(element){
+  return element.nodeName.toLowerCase() === 'select';
+}
+
+BaseWebDriver.prototype._text_input_resolver = function(element, value){
+  console.log("resolving text input");
+  copyToClipboard($("<span>" + value + "</span>").get(0));
+  pasteStringInElem(element);
+}
+
+BaseWebDriver.prototype._dropdown_resolver = function(element, value){
+  throw new Error('Not implemented');
 }
 
 //set page type match regex

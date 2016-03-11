@@ -21,7 +21,7 @@ WalmartWebDriver.prototype.ready = function(callback){
         return elements.length > 0;
     }
 
-    return false;
+    return true ;
   }
 
 
@@ -33,6 +33,7 @@ WalmartWebDriver.prototype.ready = function(callback){
         done();
       }, 1000)
     }, function(){
+      console.log($("label[for=COAC2ShpAddrFirstName]").get(0));
       callback();
     });
   });
