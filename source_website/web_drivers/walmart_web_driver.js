@@ -39,3 +39,19 @@ WalmartWebDriver.prototype.ready = function(callback){
   });
 
 }
+
+WalmartWebDriver.prototype._is_dropdown = function(element){
+  return $(element).hasClass('chooser') && $(element).hasClass('js-chooser');
+}
+
+WalmartWebDriver.prototype._dropdown_resolver = function(element, value){
+  var that = this;
+  var shipping_state = this._get_normalized_us_state(value);
+
+  $(element).find('button')
+    .filter(function(){
+      return shipping_state === that._get_normalized_us_state($(this).text());
+    })
+    .first()
+    .trigger('click');
+}
