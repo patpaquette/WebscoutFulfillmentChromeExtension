@@ -179,7 +179,7 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
   }
   else if(!that.page_type_data){ //page type isn't known, so try with all page types
     selectors_data = _.reduce(that.source_data, function(result, page_type_data){
-      result.extend(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
+      $(result).extend(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
       return result;
     }, []);
   }

@@ -128,6 +128,8 @@ $(document).ready(function(){
 
   var web_driver = getWebDriver(extractDomain(window.location.href));
 
+  var overlay, overlay_combo, overlay_fields, overlay_labels;
+
   web_driver.ready(function(){
     console.log("is ready");
     chrome.runtime.sendMessage({get_order_data: true}, function(response){
@@ -154,68 +156,77 @@ $(document).ready(function(){
               web_driver.set_field_value(field_name, shipping_fields[key]) && fill_input_success(field_name);
             }
           });
+
+          overlay = $("#fulfillment-overlay");
+          overlay_combo = overlay.find("#copy-combo");
+          overlay_fields = overlay.find("span.buyer-info");
+          overlay_labels = overlay.find("b.buyer-info");
+          console.log(overlay_fields);
         }
 
         // Prep payload for future .click events
         var copy_index = -1;
-        var spans = $("#fulfillment-overlay span.buyer-info");
-        var data = {index:copy_index, spans:spans};
+        var data = {index:copy_index, overlay: overlay, fields: overlay_fields, labels: overlay_labels};
 
         /* Input .click handlers */
         // Add .click handler with payload to all inputs
-        $("input")
-          .click(data, function (event) {
-            // Only change input values if copy combo or a span has been clicked
-            if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-              var field_name = event.data.spans[event.data.index].getAttribute('field-name');
-              fill_input_success(field_name);
+        jQuery.each($("input"), function(index, input) {
+          if (!jQuery._data(input, "events")) {
+            $(input)
+              .click(data, function (event) {
+                // Only change input values if copy combo or a span has been clicked
+                if (event.data.index >= 0 && event.data.index < event.data.fields.length) {
+                  var field_name = event.data.fields[event.data.index].getAttribute('field-name');
+                  fill_input_success(field_name);
 
-              copyToClipboard($(event.data.spans).get(event.data.index));
-              pasteStringInElem(this);
-              console.log(event.data.index);
-              // Remove previous span highlight and get the next one ready
-              removeHighlight($(event.data.spans).get(event.data.index));
-              event.data.index += 1;
-              highlight($(event.data.spans).get(event.data.index));
+                  copyToClipboard($(event.data.fields).get(event.data.index));
+                  pasteStringInElem(this);
+                  console.log(event.data.index);
+                  // Remove previous span highlight and get the next one ready
+                  removeHighlight($(event.data.fields).get(event.data.index));
+                  event.data.index += 1;
+                  highlight($(event.data.fields).get(event.data.index));
 
-              if(record_selectors){
-                save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
-              }
-            }
-          });
+                  if (record_selectors) {
+                    save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+                  }
+                }
+            });
+          }
+        });
 
         /* Copy combo handler */
-        $("#fulfillment-overlay button#copy-combo")
+        $(overlay_combo)
           .click(data, function(event) {
             // Reset highlights and index every time the copy combo button is clicked
             event.data.index = 0;
-            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
-            removeHighlight(event.data.spans);
-            highlight(event.data.spans.get(0));
-            copyToClipboard(event.data.spans.get(0));
+            event.data.fields = $(event.data.fields).not(".success");
+            removeHighlight(event.data.fields);
+            highlight(event.data.fields.get(0));
+            copyToClipboard(event.data.fields.get(0));
 
-            $("#fulfillment-overlay button").text("Restart copy combo!");
+            $(overlay_combo).text("Restart copy combo!");
           });
 
         /* Click to copy functionality */
         // Add .click callback for spans
-        $("#fulfillment-overlay span.buyer-info")
+        $(overlay_fields)
           .click(data, function(event) {
             $(this).removeClass('success');
-            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
-            event.data.index = event.data.spans.index(this);
-            removeHighlight(event.data.spans);
+            event.data.fields = $(event.data.fields).not(".success");
+            event.data.index = event.data.fields.index(this);
+            removeHighlight(event.data.fields);
             highlight(this);
             copyToClipboard(this);
           });
 
         // Add .click callback for labels
-        $("#fulfillment-overlay b.buyer-info")
+        $(overlay_labels)
           .click(data, function(event) {
-            event.data.index = event.data.spans.index($(this).nextAll("span.buyer-info"));
-            removeHighlight(event.data.spans);
-            highlight(event.data.spans.get(event.data.index));
-            copyToClipboard(event.data.spans.get(event.data.index));
+            event.data.index = event.data.fields.index($(this).nextAll("span.buyer-info"));
+            removeHighlight(event.data.fields);
+            highlight(event.data.fields.get(event.data.index));
+            copyToClipboard(event.data.fields.get(event.data.index));
           });
         // Change the text of the button to indicate that everything is ready to go
 
@@ -233,27 +244,35 @@ $(document).ready(function(){
             }
           });
 
-        /* Keyboard shortcuts */
-        var altDown = false;
+        ///* Keyboard shortcuts */
+        //var altDown = false;
+        //
+        //$(document).keydown(altDown, function(event) {
+        //  if(event.keyCode == 18) {
+        //    event.altDown = true;
+        //  }
+        //  else if(event.altDown && event.keyCode == 81) {
+        //    console.log("ALT+Q keybind!"); // doesn't work! :(
+        //  }
+        //  console.log(event.keyCode);
+        //});
+        //$(document).keyup(altDown, function(event) {
+        //  if(event.keyCode == 18) {
+        //    event.altDown = false;
+        //  }
+        //  console.log(event.keyCode);
+        //});
 
-        $(document).keydown(altDown, function(event) {
-          if(event.keyCode == 18) {
-            event.altDown = true;
-          }
-          else if(event.altDown && event.keyCode == 81) {
-            console.log("ALT+Q keybind!"); // doesn't work! :(
-          }
-          console.log(event.keyCode);
-        });
-        $(document).keyup(altDown, function(event) {
-          if(event.keyCode == 18) {
-            event.altDown = false;
-          }
-          console.log(event.keyCode);
-        });
-
-        $("#fulfillment-overlay button#copy-combo").text("Start copy combo!");
+        $(overlay_combo).text("Start copy combo!");
+        //
+        //$("#billingAddress\\.address\\.stateSelect").on("click mousedown mouseup focus blur keydown change", function(e){
+        //  console.log(e);
+        //});
+        //$("#billingAddress\\.address\\.stateSelect").find("option").on("click mousedown mouseup focus blur keydown change", function(e){
+        //  console.log(e);
+        //});
       });
     });
   });
 });
+
