@@ -203,7 +203,7 @@ $(document).ready(function(){
             highlight(event.data.spans.get(0));
             copyToClipboard(event.data.spans.get(0));
 
-            $("#fulfillment-overlay button").text("Restart copy combo!");
+            $("#fulfillment-overlay button#copy-combo").text("Restart copy combo!");
           });
 
         /* Click to copy functionality */
