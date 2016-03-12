@@ -158,7 +158,7 @@ $(document).ready(function(){
           var overlay_html = overlay_template(shipping_fields);
           web_driver.insert_overlay(overlay_html);
 
-          autofill_shipping_form(web_driver, shipping_fields);
+          //autofill_shipping_form(web_driver, shipping_fields);
 
           $("#attempt-autofill").click(function(){
             autofill_shipping_form(web_driver, shipping_fields);
@@ -174,23 +174,25 @@ $(document).ready(function(){
         // Add .click handler with payload to all inputs
         $("input")
           .click(data, function (event) {
-            // Only change input values if copy combo or a span has been clicked
-            if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-              var field_name = event.data.spans[event.data.index].getAttribute('field-name');
-              fill_input_success(field_name);
+            setTimeout(function(){
+              // Only change input values if copy combo or a span has been clicked
+              if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
+                var field_name = event.data.spans[event.data.index].getAttribute('field-name');
+                fill_input_success(field_name);
 
-              copyToClipboard($(event.data.spans).get(event.data.index));
-              pasteStringInElem(this);
-              console.log(event.data.index);
-              // Remove previous span highlight and get the next one ready
-              removeHighlight($(event.data.spans).get(event.data.index));
-              event.data.index += 1;
-              highlight($(event.data.spans).get(event.data.index));
+                copyToClipboard($(event.data.spans).get(event.data.index));
+                pasteStringInElem(this);
+                console.log(event.data.index);
+                // Remove previous span highlight and get the next one ready
+                removeHighlight($(event.data.spans).get(event.data.index));
+                event.data.index += 1;
+                highlight($(event.data.spans).get(event.data.index));
 
-              if(record_selectors){
-                save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+                if(record_selectors){
+                  save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+                }
               }
-            }
+            }, 1000);
           });
 
         /* Copy combo handler */
@@ -198,7 +200,7 @@ $(document).ready(function(){
           .click(data, function(event) {
             // Reset highlights and index every time the copy combo button is clicked
             event.data.index = 0;
-            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
+            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success, [field-name=quantity])");
             removeHighlight(event.data.spans);
             highlight(event.data.spans.get(0));
             copyToClipboard(event.data.spans.get(0));
