@@ -1,6 +1,83 @@
 /**
  * Created by patricepaquette on 2016-02-22.
  */
+
+/** ----------- Overlay data ----------- **/
+function OverlayData() {
+  this._index = -1;
+  this.overlay = null;
+  this.fields = null;
+  this.labels = null;
+  this.autofill = null;
+  this.copyCombo = null;
+  this.skip = null;
+  this.recorder = null;
+}
+
+/* ----------- Index manipulation ----------- */
+//  NOTE: should probably use switch/case
+// Change the index, highlight accordingly, and copy the new data (if any).
+// An index of -1 resets everything to initial values.
+OverlayData.prototype.setIndex = function(newIndex) {
+  if(typeof newIndex == "number") {
+    removeHighlight(this.fields);
+    if(this.indexInRange(newIndex)) {
+      this._index = newIndex;
+      // Make sure the new field hasn't been used already (if it has, go to the next field)
+      if($(this.fields.get(newIndex)).hasClass("success")) {
+        console.log("skipping to " + (newIndex + 1));
+        this.incrementIndex();
+        return;
+      } else {
+        highlight(this.fields.get(newIndex));
+        copyToClipboard(this.fields.get(newIndex));
+        console.log("index successfully changed! " + this._index);
+        return true;
+      }
+    } else if(newIndex == -1) {
+      this.fields.removeClass("success");
+      this._index = -1;
+      this.copyCombo.text("Start copy combo!");
+      console.log("reset successful");
+      return;
+    }
+    console.log("index not in range");
+    return false;
+  }
+  // If newIndex is a <b> or <span>, find the index corresponding to the span (or the closest one
+  // in the case of <b>) and call setIndex() with it
+  else if(typeof newIndex == "object") {
+    if($(newIndex).prop("tagName") == "B" && $(newIndex).hasClass("buyer-info")) {
+      newIndex = $(newIndex).nextAll("span.buyer-info");
+      $(newIndex).removeClass("success");
+    }
+    if($(newIndex).prop("tagName") == "SPAN" && $(newIndex).hasClass("buyer-info")) {
+      this.setIndex(this.fields.index(newIndex));
+      return;
+    }
+    else {
+      console.log("span error! index not changed!");
+      return false;
+    }
+  }
+  else {
+    console.log("type error! index not changed!");
+    return false;
+  }
+};
+OverlayData.prototype.indexInRange = function(index) {
+  if(typeof index == "number") {
+    return index >= 0 && index < this.fields.length;
+  }
+  else if(!index) {
+    return this._index >= 0 && this._index < this.fields.length;
+  }
+};
+OverlayData.prototype.incrementIndex = function() { return this.setIndex(this._index + 1) };
+OverlayData.prototype.decrementIndex = function() { return this.setIndex(this._index - 1) };
+OverlayData.prototype.getIndex = function() { return this._index };
+
+/** ----------- Misc ----------- **/
 function extractDomain(url) {
   var domain;
   //find & remove protocol (http, ftp, etc.) and get domain
@@ -34,12 +111,11 @@ function getWebDriver(source_domain){
   }
 }
 
+/** ----------- Utility ----------- **/
 function copyToClipboard(elem) {
   // Create hidden text element, if it doesn't already exist
   var targetId = "_hiddenCopyText_";
-  console.log(document.body);
-  console.log("element: ");
-  console.log(elem);
+
   var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
   var origSelectionStart, origSelectionEnd;
   if (isInput) {
@@ -50,8 +126,7 @@ function copyToClipboard(elem) {
   } else {
     // Must use a temporary form element for the selection and copy
     target = document.getElementById(targetId);
-    console.log(target);
-    console.log(!target);
+
     if (!target) {
       var target = document.createElement("textarea");
       target.style.position = "absolute";
@@ -90,8 +165,12 @@ function copyToClipboard(elem) {
   return succeed;
 }
 
-function fill_input_success(field_name){
-  $("span[field-name=" + field_name + "]").addClass('success');
+function fill_input_success(elem){
+  if(typeof elem == "string") {
+    $("span[field-name=" + elem + "]").addClass('success');
+  } else {
+    $(elem).addClass('success');
+  }
 }
 
 function highlight(elem) {
@@ -112,6 +191,7 @@ function pasteStringInElem(elem){
   }
 }
 
+/** ----------- Recorder ----------- **/
 function save_element_selector(web_driver, element, page_type, field){
   var id = element.getAttribute('id');
   var selector = "#" + id;
@@ -121,6 +201,7 @@ function save_element_selector(web_driver, element, page_type, field){
   }
 }
 
+/** ----------- Autofill ----------- **/
 function autofill_shipping_form(web_driver, shipping_fields){
   var fulfillment_fields_map = {"first_name": "firstname", "last_name": "lastname", "shipping_address_line_1": "address", "shipping_city": "city", "shipping_state": "state", "shipping_postal_code": "postal_code", "shipping_phone": "phone", "quantity": "quantity"};
 
@@ -133,19 +214,19 @@ function autofill_shipping_form(web_driver, shipping_fields){
   });
 }
 
-//get web driver for this domain
+/** ----------- Main script ----------- **/
 $(document).ready(function(){
   var field_to_page_type_map = { "firstname": "shipping", "lastname": "shipping", "address": "shipping", "city": "shipping", "state": "shipping", "postal_code": "shipping", "phone": "shipping", "quantity": "product"};
 
   var web_driver = getWebDriver(extractDomain(window.location.href));
 
-  var overlay, overlay_combo, overlay_fields, overlay_labels;
-
   web_driver.ready(function(){
     console.log("is ready");
     chrome.runtime.sendMessage({get_order_data: true}, function(response){
       $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
-        /* Fulfillment overlay */
+        var overlay_data;
+
+        /* -- Fulfillment overlay -- */
         // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
         if($("#fulfillment-overlay").length == 0) {
           var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
@@ -160,102 +241,99 @@ $(document).ready(function(){
           var overlay_html = overlay_template(shipping_fields);
           web_driver.insert_overlay(overlay_html);
 
-          //autofill_shipping_form(web_driver, shipping_fields);
+          // autofill_shipping_form(web_driver, shipping_fields);
 
+          // Create OverlayData object and cache jQuery selectors
+          overlay_data = new OverlayData();
+          overlay_data.overlay = $("#fulfillment-overlay");
+          overlay_data.autofill = overlay_data.overlay.find("#attempt-autofill");
+          overlay_data.copyCombo = overlay_data.overlay.find("#copy-combo");
+          overlay_data.skip = overlay_data.overlay.find("#skip-field");
+          overlay_data.reset = overlay_data.overlay.find("#reset-overlay");
+          overlay_data.recorder = overlay_data.overlay.find("#selector-recording-toggle");
+          overlay_data.fields = overlay_data.overlay.find("span.buyer-info");
+          overlay_data.labels = overlay_data.overlay.find("b.buyer-info");
 
-          $("#attempt-autofill").click(function(){
+          /** ----------- Button click handlers ----------- **/
+          /* -- Autofill button handler -- */
+          $(overlay_data.autofill).click(overlay_data, function(event){
             autofill_shipping_form(web_driver, shipping_fields);
+            event.data.setIndex(1);
           });
 
-          overlay = $("#fulfillment-overlay");
-          overlay_combo = overlay.find("#copy-combo");
-          overlay_fields = overlay.find("span.buyer-info");
-          overlay_labels = overlay.find("b.buyer-info");
-          console.log(overlay_fields);
+          /* -- Copy combo .click handler -- */
+          $(overlay_data.copyCombo)
+            .click(overlay_data, function(event) {
+              // Skip the quantity field by starting at index 1
+              event.data.setIndex(1);
+              $(event.data.copyCombo).text("Restart copy combo!");
+          });
+
+          /* -- Selector recording button .click handler -- */
+          var record_selectors = false;
+          $(overlay_data.recorder)
+            .click(function(){
+              record_selectors = !record_selectors;
+
+              if(record_selectors){
+                $(this).text("Turn off selector recording");
+              }
+              else{
+                $(this).text("Turn on selector recording");
+              }
+          });
+
+          /* -- Skip field .click handler -- */
+          $(overlay_data.skip)
+            .click(overlay_data, function(event) {
+              if(event.data.indexInRange() && event.data.incrementIndex()) {
+                fill_input_success(event.data.fields.get(event.data.getIndex() - 1))
+              }
+            });
+
+          /* -- Reset .click handler -- */
+          $(overlay_data.reset)
+            .click(overlay_data, function(event) {
+              event.data.setIndex(-1);
+            });
+
+          /* -- Fields and labels (click-to-copy) handlers -- */
+          $(overlay_data.fields)
+            .click(overlay_data, function(event) {
+              $(this).removeClass('success');
+              event.data.setIndex(this);
+          });
+          $(overlay_data.labels)
+            .click(overlay_data, function(event) {
+              event.data.setIndex(this);
+          });
+
+          /* -- Input .click handlers -- */
+          // Add .click handler with payload to all inputs
+          jQuery.each($("input"), function(index, input) {
+            if (!jQuery._data(input, "events")) {
+              $(input)
+                .click(overlay_data, function (event) {
+                  // Only change input values if copy combo or a span has been clicked
+                  if (event.data.indexInRange()) {
+                    fill_input_success(event.data.fields.get(event.data.getIndex()));
+                    pasteStringInElem(this);
+                    event.data.incrementIndex();
+
+                    if (record_selectors) {
+                      save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+                    }
+                  }
+              });
+            }
+          });
+
+          // Change the text of the button to indicate that everything is ready to go
+          $(overlay_data.copyCombo).text("Start copy combo!");
         }
 
-        // Prep payload for future .click events
-        var copy_index = -1;
-        var data = {index:copy_index, overlay: overlay, fields: overlay_fields, labels: overlay_labels};
 
-        /* Input .click handlers */
-        // Add .click handler with payload to all inputs
-        jQuery.each($("input"), function(index, input) {
-          if (!jQuery._data(input, "events")) {
-            $(input)
-              .click(data, function (event) {
-                // Only change input values if copy combo or a span has been clicked
-                if (event.data.index >= 0 && event.data.index < event.data.fields.length) {
-                  var field_name = event.data.fields[event.data.index].getAttribute('field-name');
-                  fill_input_success(field_name);
-
-                  copyToClipboard($(event.data.fields).get(event.data.index));
-                  pasteStringInElem(this);
-                  console.log(event.data.index);
-                  // Remove previous span highlight and get the next one ready
-                  removeHighlight($(event.data.fields).get(event.data.index));
-                  event.data.index += 1;
-                  highlight($(event.data.fields).get(event.data.index));
-
-                  if (record_selectors) {
-                    save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
-                  }
-                }
-            });
-          }
-        });
-
-        /* Copy combo handler */
-        $(overlay_combo)
-          .click(data, function(event) {
-            // Reset highlights and index every time the copy combo button is clicked
-            event.data.index = 0;
-            event.data.fields = $(event.data.fields).not(".success, [field-name=quantity]");
-            removeHighlight(event.data.fields);
-            highlight(event.data.fields.get(0));
-            copyToClipboard(event.data.fields.get(0));
-
-            $(overlay_combo).text("Restart copy combo!");
-            //event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success, [field-name=quantity])");
-          });
-
-        /* Click to copy functionality */
-        // Add .click callback for spans
-        $(overlay_fields)
-          .click(data, function(event) {
-            $(this).removeClass('success');
-            event.data.fields = $(event.data.fields).not(".success");
-            event.data.index = event.data.fields.index(this);
-            removeHighlight(event.data.fields);
-            highlight(this);
-            copyToClipboard(this);
-          });
-
-        // Add .click callback for labels
-        $(overlay_labels)
-          .click(data, function(event) {
-            event.data.index = event.data.fields.index($(this).nextAll("span.buyer-info"));
-            removeHighlight(event.data.fields);
-            highlight(event.data.fields.get(event.data.index));
-            copyToClipboard(event.data.fields.get(event.data.index));
-          });
-        // Change the text of the button to indicate that everything is ready to go
-
-        /* Selector recording */
-        var record_selectors = false;
-        $("#selector-recording-toggle")
-          .click(function(){
-            record_selectors = !record_selectors;
-
-            if(record_selectors){
-              $(this).text("Turn off selector recording");
-            }
-            else{
-              $(this).text("Turn on selector recording");
-            }
-          });
-
-        ///* Keyboard shortcuts */
+        ///* -- Keyboard shortcuts -- */
         //var altDown = false;
         //
         //$(document).keydown(altDown, function(event) {
@@ -274,7 +352,6 @@ $(document).ready(function(){
         //  console.log(event.keyCode);
         //});
 
-        $(overlay_combo).text("Start copy combo!");
         //
         //$("#billingAddress\\.address\\.stateSelect").on("click mousedown mouseup focus blur keydown change", function(e){
         //  console.log(e);
