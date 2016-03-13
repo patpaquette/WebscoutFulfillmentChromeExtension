@@ -3,62 +3,6 @@
  */
 var backend_api_endpoint = "https://45.55.18.141";
 
-function copyToClipboard(elem) {
-  // Create hidden text element, if it doesn't already exist
-  var targetId = "_hiddenCopyText_";
-  console.log(document.body);
-  console.log("element: ");
-  console.log(elem);
-  var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
-  var origSelectionStart, origSelectionEnd;
-  if (isInput) {
-    // Can just use the original source element for the selection and copy
-    target = elem;
-    origSelectionStart = elem.selectionStart;
-    origSelectionEnd = elem.selectionEnd;
-  } else {
-    // Must use a temporary form element for the selection and copy
-    target = document.getElementById(targetId);
-    console.log(target);
-    console.log(!target);
-    if (!target) {
-      var target = document.createElement("textarea");
-      target.style.position = "absolute";
-      target.style.left = "-9999px";
-      target.style.top = "0";
-      target.id = targetId;
-      document.body.appendChild(target);
-    }
-    target.textContent = elem.textContent;
-  }
-  // Select the content
-  var currentFocus = document.activeElement;
-  target.focus();
-  target.setSelectionRange(0, target.value.length);
-
-  // Copy the selection
-  var succeed;
-  try {
-    succeed = document.execCommand("copy");
-  } catch(e) {
-    succeed = false;
-  }
-
-  // Restore original focus
-  if (currentFocus && typeof currentFocus.focus === "function") {
-    currentFocus.focus();
-  }
-
-  if (isInput) {
-    // Restore prior selection
-    elem.setSelectionRange(origSelectionStart, origSelectionEnd);
-  } else {
-    // Clear temporary content
-    target.textContent = "";
-  }
-  return succeed;
-}
-
 function pasteStringInElem(elem){
   console.log("elem to paste in ");
   console.log(elem);

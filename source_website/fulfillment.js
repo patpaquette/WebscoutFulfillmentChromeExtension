@@ -133,6 +133,10 @@ function autofill_shipping_form(web_driver, shipping_fields){
   });
 }
 
+function highlight_prices(){
+  $(":contains($)").addClass('price-highlight');
+}
+
 //get web driver for this domain
 $(document).ready(function(){
   var field_to_page_type_map = { "firstname": "shipping", "lastname": "shipping", "address": "shipping", "city": "shipping", "state": "shipping", "postal_code": "shipping", "phone": "shipping", "quantity": "product"};
@@ -170,30 +174,7 @@ $(document).ready(function(){
         var spans = $("#fulfillment-overlay span.buyer-info");
         var data = {index:copy_index, spans:spans};
 
-        /* Input .click handlers */
-        // Add .click handler with payload to all inputs
-        $("input")
-          .click(data, function (event) {
-            setTimeout(function(){
-              // Only change input values if copy combo or a span has been clicked
-              if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-                var field_name = event.data.spans[event.data.index].getAttribute('field-name');
-                fill_input_success(field_name);
 
-                copyToClipboard($(event.data.spans).get(event.data.index));
-                pasteStringInElem(this);
-                console.log(event.data.index);
-                // Remove previous span highlight and get the next one ready
-                removeHighlight($(event.data.spans).get(event.data.index));
-                event.data.index += 1;
-                highlight($(event.data.spans).get(event.data.index));
-
-                if(record_selectors){
-                  save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
-                }
-              }
-            }, 1000);
-          });
 
         /* Copy combo handler */
         $("#fulfillment-overlay button#copy-combo")
@@ -203,9 +184,32 @@ $(document).ready(function(){
             event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success, [field-name=quantity])");
             removeHighlight(event.data.spans);
             highlight(event.data.spans.get(0));
-            copyToClipboard(event.data.spans.get(0));
 
             $("#fulfillment-overlay button#copy-combo").text("Restart copy combo!");
+
+            /* Input .click handlers */
+            // Add .click handler with payload to all inputs
+            $("input")
+              .click(data, function (event) {
+                // Only change input values if copy combo or a span has been clicked
+                if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
+                  copyToClipboard($(event.data.spans).get(event.data.index));
+                  pasteStringInElem(this);
+
+                  var field_name = event.data.spans[event.data.index].getAttribute('field-name');
+                  fill_input_success(field_name);
+
+                  console.log(event.data.index);
+                  // Remove previous span highlight and get the next one ready
+                  removeHighlight($(event.data.spans).get(event.data.index));
+                  event.data.index += 1;
+                  highlight($(event.data.spans).get(event.data.index));
+
+                  if(record_selectors){
+                    save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+                  }
+                }
+              });
           });
 
         /* Click to copy functionality */
@@ -243,6 +247,12 @@ $(document).ready(function(){
               $(this).text("Turn on selector recording");
             }
           });
+
+
+        /* Cost selection */
+        $("#select-cost-btn").click(function(){
+          highlight_prices();
+        });
 
         /* Keyboard shortcuts */
         var altDown = false;

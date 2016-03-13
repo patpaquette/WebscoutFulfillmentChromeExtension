@@ -7,6 +7,10 @@
     .success {
         background-color: lawngreen;
     }
+
+    .price_highlight {
+        background-color: green;
+    }
 </style>
 
 <div id="fulfillment-overlay" style="display:block;position:fixed;top:0px;left:0px;width:250px;height:100%;z-index:99999;padding: 5px; color: black; background-color: lightgrey; text-align: left; float: left;">
@@ -65,6 +69,10 @@
     <p>
         <b class="buyer-info">Postal Code</b><br/>
         <span class="buyer-info" field-name="postal_code">{{shipping_postal_code}}</span>
+    </p>
+
+    <p>
+        <button id="select-cost-btn">Select Cost</button>
     </p>
 
     <TEXTAREA ID="holdtext" STYLE="display:none;">
