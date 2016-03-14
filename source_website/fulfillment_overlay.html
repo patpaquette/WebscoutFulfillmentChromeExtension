@@ -4,20 +4,24 @@
     #fulfillment-overlay {letter-spacing:0.1px}
     #fulfillment-overlay {line-height:1}
 
+    #fulfillment-overlay button { margin-bottom: 5px; }
+    #fulfillment-overlay input { margin-bottom: 5px; width: 100%;}
+
     .success {
         background-color: lawngreen;
     }
 
-    .price_highlight {
-        background-color: green;
+    .selection-highlight {
+        background-color: lightgreen;
+        cursor: pointer;
     }
 </style>
 
-<div id="fulfillment-overlay" style="display:block;position:fixed;top:0px;left:0px;width:250px;height:100%;z-index:99999;padding: 5px; color: black; background-color: lightgrey; text-align: left; float: left;">
+<div id="fulfillment-overlay" style="display:block;position:fixed;top:0px;left:0px;width:250px;height:100%;z-index:99999;padding: 5px; color: black; background-color: lightgrey; text-align: left; float: left; overflow: scroll;">
     <h1 style="color:black;;">Webscout Fulfillment</h1>
 
-    <button style="color:black" id="copy-combo">loading...</button><br/><br/>
-    <button id="selector-recording-toggle">Turn on selector recording</button><br/><br/>
+    <button style="color:black" id="copy-combo">loading...</button><br/>
+    <button id="selector-recording-toggle">Turn on selector recording</button><br/>
     <button id="attempt-autofill">Attempt Autofill</button>
 
     <p>
@@ -72,7 +76,21 @@
     </p>
 
     <p>
-        <button id="select-cost-btn">Select Cost</button>
+        <button id="select-cost-btn">Select Cost</button> <br/>
+        <input type="text" id="cost-input" placeholder="Cost"/><br/>
+        <button id="fetch-gift-card-button" disabled>Fetch gift card</button><br/>
+
+        <span id="gift-card-number" class="buyer-info" field-name="gift-card-number"></span><br/>
+
+        <span id="gift-card-pin" class="buyer-info" field-name="gift-card-pin"></span>
+    </p>
+
+    <p>
+        <button id="select-confirmation-btn">Select confirmation number</button><br/>
+        <input type="text" id="confirmation-number" placeholder="Confirmation Number" />
+    </p>
+    <p>
+        <button id="finished-btn">Finished</button>
     </p>
 
     <TEXTAREA ID="holdtext" STYLE="display:none;">

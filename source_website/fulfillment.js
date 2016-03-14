@@ -133,8 +133,58 @@ function autofill_shipping_form(web_driver, shipping_fields){
   });
 }
 
-function highlight_prices(){
-  $(":contains($)").addClass('price-highlight');
+function overlay_copy_field_value(element){
+
+}
+
+function highlight_prices_for_selection(){
+  var price_regex = /^\$\d+\.\d\d$/m;
+  var elem_matches = $("span:contains('$'), p:contains('$')")
+    .filter(function(){
+      var trimmed_str = $(this).text().trim();
+      var matches = trimmed_str.match(price_regex);
+
+      if(matches){
+        return trimmed_str.length === matches[0].length;
+      }
+
+      return false;
+    })
+    .addClass('selection-highlight')
+    .on("click.selection-highlight", function(){
+      $("#cost-input")
+        .attr('value', $(this).text().trim().replace('$', ''))
+        .trigger('input');
+
+      elem_matches
+        .removeClass('selection-highlight')
+        .off("click.selection-highlight");
+    });
+}
+
+function highlight_source_confirmation_for_selection(){
+  var source_confirmation_regex = /[\d-]+/m;
+  var elem_matches = $(document)
+    .filter(function(){
+      var trimmed_str = $(this).text().trim();
+      var matches = trimmed_str.match(source_confirmation_regex);
+
+      if(matches){
+        return trimmed_str.length === matches[0].length;
+      }
+
+      return false;
+    })
+    .addClass("selection-highlight")
+    .on("click.selection-highlight", function(){
+      $("#confirmation-number")
+        .attr('value', $(this).text().trim())
+        .trigger('input');
+
+      elem_matches
+        .removeClass('selection-highlight')
+        .off('click.selection-highlight');
+    });
 }
 
 //get web driver for this domain
@@ -177,6 +227,33 @@ $(document).ready(function(){
 
 
         /* Copy combo handler */
+        function provision_inputs_event_handlers(){
+          /* Input .click handlers */
+          // Add .click handler with payload to all inputs
+          $("input")
+            .off('click.fulfillment_inputs')
+            .on('click.fulfillment_inputs', data, function (event) {
+              // Only change input values if copy combo or a span has been clicked
+              if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
+                copyToClipboard($(event.data.spans).get(event.data.index));
+                pasteStringInElem(this);
+
+                var field_name = event.data.spans[event.data.index].getAttribute('field-name');
+                fill_input_success(field_name);
+
+                console.log(event.data.index);
+                // Remove previous span highlight and get the next one ready
+                removeHighlight($(event.data.spans).get(event.data.index));
+                event.data.index += 1;
+                highlight($(event.data.spans).get(event.data.index));
+
+                if(record_selectors){
+                  save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+                }
+              }
+            });
+        }
+
         $("#fulfillment-overlay button#copy-combo")
           .click(data, function(event) {
             // Reset highlights and index every time the copy combo button is clicked
@@ -186,30 +263,7 @@ $(document).ready(function(){
             highlight(event.data.spans.get(0));
 
             $("#fulfillment-overlay button#copy-combo").text("Restart copy combo!");
-
-            /* Input .click handlers */
-            // Add .click handler with payload to all inputs
-            $("input")
-              .click(data, function (event) {
-                // Only change input values if copy combo or a span has been clicked
-                if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-                  copyToClipboard($(event.data.spans).get(event.data.index));
-                  pasteStringInElem(this);
-
-                  var field_name = event.data.spans[event.data.index].getAttribute('field-name');
-                  fill_input_success(field_name);
-
-                  console.log(event.data.index);
-                  // Remove previous span highlight and get the next one ready
-                  removeHighlight($(event.data.spans).get(event.data.index));
-                  event.data.index += 1;
-                  highlight($(event.data.spans).get(event.data.index));
-
-                  if(record_selectors){
-                    save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
-                  }
-                }
-              });
+            provision_inputs_event_handlers();
           });
 
         /* Click to copy functionality */
@@ -222,6 +276,7 @@ $(document).ready(function(){
             removeHighlight(event.data.spans);
             highlight(this);
             copyToClipboard(this);
+            provision_inputs_event_handlers();
           });
 
         // Add .click callback for labels
@@ -231,6 +286,7 @@ $(document).ready(function(){
             removeHighlight(event.data.spans);
             highlight(event.data.spans.get(event.data.index));
             copyToClipboard(event.data.spans.get(event.data.index));
+            provision_inputs_event_handlers();
           });
         // Change the text of the button to indicate that everything is ready to go
 
@@ -251,7 +307,48 @@ $(document).ready(function(){
 
         /* Cost selection */
         $("#select-cost-btn").click(function(){
-          highlight_prices();
+          highlight_prices_for_selection();
+        });
+
+        $("#cost-input").on('input', function(){
+          var price_regex = /\d+\.\d\d/m;
+
+          if(price_regex.test($(this).attr('value'))){
+            $("#fetch-gift-card-button").prop('disabled', false);
+          }
+        });
+
+        /* Gift card */
+        $("#gift-card-number").click(function(){
+          $(this).removeClass('success');
+          spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
+          removeHighlight(spans);
+          highlight(this);
+          copyToClipboard(this);
+        });
+
+        $("#fetch-gift-card-button").click(function(){
+          $.get("https://45.55.18.141/gift_card/" + response.order_data.domain_host + "/" + Math.ceil(parseFloat($("#cost-input").attr('value'))) + "00", function(body){
+            if(body.code){
+              console.log("code found");
+              $("#gift-card-number").append(body.code);
+              $("#gift-card-pin").append(body.pin);
+            }
+            else{
+              console.log("code not found");
+              $("#gift-card-number").append("No gift card found");
+            }
+          }, "json");
+        });
+
+        /* source confirmation */
+        $("#select-confirmation-btn").click(function(){
+          highlight_source_confirmation_for_selection();
+        });
+
+        /* finished */
+        $("#finished-btn").click(function(){
+
         });
 
         /* Keyboard shortcuts */
