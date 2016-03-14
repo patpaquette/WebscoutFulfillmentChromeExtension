@@ -5,15 +5,20 @@
 /** ----------- Overlay data ----------- **/
 function OverlayData() {
   this._index = -1;
+
   this.overlay = null;
-  this.fields = null;
-  this.labels = null;
+
+  // Buttons
   this.autofill = null;
   this.copyCombo = null;
   this.reset = null;
   this.previous = null;
   this.next = null;
   this.recorder = null;
+
+  // Fields and labels
+  this.fields = null;
+  this.labels = null;
 }
 
 /* ----------- Misc ----------- */
@@ -37,13 +42,11 @@ OverlayData.prototype.getPreviousField = function() {
   if(this.indexInRange(this._index - 1)) {
     return this.fields.get(this._index - 1);
   }
-  return;
 };
 OverlayData.prototype.getNextField = function() {
   if(this.indexInRange(this._index + 1)) {
     return this.fields.get(this._index + 1);
   }
-  return;
 };
 OverlayData.prototype.resetAll = function() {
   removeHighlight(this.fields);
@@ -140,6 +143,7 @@ function extractDomain(url) {
   domain = domain.split(':')[0];
 
   domain = domain.replace('www.', '');
+  domain = domain.replace('secure2.', ''); // For Home Depot specifically
   domain = domain.replace('.com', '');
   domain = domain.replace('.net', '');
   domain = domain.replace('.org', '');
@@ -213,11 +217,12 @@ function copyToClipboard(elem) {
   return succeed;
 }
 
-function fill_input_success(elem){
-  if(typeof elem == "string") {
-    $("span[field-name=" + elem + "]").addClass('success');
-  } else if (typeof elem == "object") {
-    $(elem).addClass('success');
+function fill_input_success(field){
+  if(typeof field == "string") {
+    $("span[field-name=" + field + "]").addClass('success');
+  } 
+  else if(typeof field == "object") {
+    $(field).addClass('success');
   }
 }
 
@@ -273,6 +278,7 @@ $(document).ready(function(){
     chrome.runtime.sendMessage({get_order_data: true}, function(response){
       $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
         var overlay_data;
+        console.log(response);
 
         /* -- Fulfillment overlay -- */
         // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
@@ -411,16 +417,7 @@ $(document).ready(function(){
               }
             }
           }
-          console.log(event.keyCode);
         });
-
-        //
-        //$("#billingAddress\\.address\\.stateSelect").on("click mousedown mouseup focus blur keydown change", function(e){
-        //  console.log(e);
-        //});
-        //$("#billingAddress\\.address\\.stateSelect").find("option").on("click mousedown mouseup focus blur keydown change", function(e){
-        //  console.log(e);
-        //});
       });
     });
   });

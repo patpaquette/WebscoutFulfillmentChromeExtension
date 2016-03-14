@@ -62,7 +62,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     console.log(sender);
 
     if(current_order){
-      var domain_re = /.*([^\.]+)(com|net|org|info|coop|int|co\.uk|org\.uk|ac\.uk|uk|__and so on__)$/g
+      var domain_re = /.*([^\.]+)(com|net|org|info|coop|int|co\.uk|org\.uk|ac\.uk|uk|__and so on__)$/g;
       var order_source_domain = current_order.item_source_link.match(domain_re);
       var current_domain = sender.url.match(domain_re);
 
@@ -82,19 +82,22 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 //check if tab url has same domain as the order source (this is required for websites that wipe out the url parameters, which can be used to determine whether the extension should be enabled)
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
   //only check if there is an order to fulfill
+  console.log(current_order);
   if(current_order && changeInfo.status === 'complete'){
     console.log(tab.url);
     console.log(current_order.item_source_link);
 
-    var order_source_domain = extractDomain(current_order.item_source_link);
+    //var order_source_domain = extractDomain(current_order.item_source_link);
+    var order_source_domain = current_order.domain_host;
     var current_domain = extractDomain(tab.url);
 
     console.log("domains");
     console.log(order_source_domain);
     console.log(current_domain);
-    if(order_source_domain === current_domain){
+    //if(order_source_domain === current_domain){
+    if(current_domain.indexOf(order_source_domain) >= 0){
       //inject fulfillment scripts
       injectExtensionScripts("fulfillment", tabId);
     }
   }
-})
+});
