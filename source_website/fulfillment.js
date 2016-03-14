@@ -10,38 +10,86 @@ function OverlayData() {
   this.labels = null;
   this.autofill = null;
   this.copyCombo = null;
-  this.skip = null;
+  this.reset = null;
+  this.previous = null;
+  this.next = null;
   this.recorder = null;
 }
+
+/* ----------- Misc ----------- */
+OverlayData.prototype.cacheSelectors = function() {
+  this.overlay = $("#fulfillment-overlay");
+
+  // Buttons
+  this.autofill = this.overlay.find("#attempt-autofill");
+  this.copyCombo = this.overlay.find("#copy-combo");
+  this.reset = this.overlay.find("#reset-overlay");
+  this.recorder = this.overlay.find("#selector-recording-toggle");
+  this.previous = this.overlay.find("#previous-field");
+  this.next = this.overlay.find("#next-field");
+
+  // Fields and labels
+  this.fields = this.overlay.find("span.buyer-info");
+  this.labels = this.overlay.find("b.buyer-info");
+};
+
+OverlayData.prototype.getPreviousField = function() {
+  if(this.indexInRange(this._index - 1)) {
+    return this.fields.get(this._index - 1);
+  }
+  return;
+};
+OverlayData.prototype.getNextField = function() {
+  if(this.indexInRange(this._index + 1)) {
+    return this.fields.get(this._index + 1);
+  }
+  return;
+};
+OverlayData.prototype.resetAll = function() {
+  removeHighlight(this.fields);
+  this.fields.removeClass("success");
+  this._index = -1;
+  this.copyCombo.text("Start copy combo!");
+  console.log("reset successful");
+};
 
 /* ----------- Index manipulation ----------- */
 //  NOTE: should probably use switch/case
 // Change the index, highlight accordingly, and copy the new data (if any).
-// An index of -1 resets everything to initial values.
+// The quantity field is always skipped.
 OverlayData.prototype.setIndex = function(newIndex) {
   if(typeof newIndex == "number") {
     removeHighlight(this.fields);
     if(this.indexInRange(newIndex)) {
+      var oldIndex = this._index;
       this._index = newIndex;
       // Make sure the new field hasn't been used already (if it has, go to the next field)
-      if($(this.fields.get(newIndex)).hasClass("success")) {
+      if($(this.fields.get(newIndex)).hasClass("success") || ($(this.fields.get(newIndex)).attr("field-name") == "quantity")) {
         console.log("skipping to " + (newIndex + 1));
-        this.incrementIndex();
+
+        if(newIndex < oldIndex) {
+          this.decrementIndex();
+        }
+        else if(newIndex > oldIndex) {
+          this.incrementIndex();
+        }
         return;
-      } else {
+      }
+      // Successful index change within bounds
+      else {
         highlight(this.fields.get(newIndex));
         copyToClipboard(this.fields.get(newIndex));
         console.log("index successfully changed! " + this._index);
         return true;
       }
-    } else if(newIndex == -1) {
-      this.fields.removeClass("success");
-      this._index = -1;
-      this.copyCombo.text("Start copy combo!");
-      console.log("reset successful");
+    }
+    else if(newIndex == this.fields.length || newIndex == -1) {
+      this._index = newIndex;
+      console.log("index now on bound " + this._index);
       return;
     }
-    console.log("index not in range");
+
+    console.log("index not in bounds!");
     return false;
   }
   // If newIndex is a <b> or <span>, find the index corresponding to the span (or the closest one
@@ -77,7 +125,7 @@ OverlayData.prototype.incrementIndex = function() { return this.setIndex(this._i
 OverlayData.prototype.decrementIndex = function() { return this.setIndex(this._index - 1) };
 OverlayData.prototype.getIndex = function() { return this._index };
 
-/** ----------- Misc ----------- **/
+/** ----------- Misc functions ----------- **/
 function extractDomain(url) {
   var domain;
   //find & remove protocol (http, ftp, etc.) and get domain
@@ -168,7 +216,7 @@ function copyToClipboard(elem) {
 function fill_input_success(elem){
   if(typeof elem == "string") {
     $("span[field-name=" + elem + "]").addClass('success');
-  } else {
+  } else if (typeof elem == "object") {
     $(elem).addClass('success');
   }
 }
@@ -191,16 +239,6 @@ function pasteStringInElem(elem){
   }
 }
 
-/** ----------- Recorder ----------- **/
-function save_element_selector(web_driver, element, page_type, field){
-  var id = element.getAttribute('id');
-  var selector = "#" + id;
-
-  if(id){
-    return web_driver.add_page_type_field_selector(page_type, field, selector, 'css');
-  }
-}
-
 /** ----------- Autofill ----------- **/
 function autofill_shipping_form(web_driver, shipping_fields){
   var fulfillment_fields_map = {"first_name": "firstname", "last_name": "lastname", "shipping_address_line_1": "address", "shipping_city": "city", "shipping_state": "state", "shipping_postal_code": "postal_code", "shipping_phone": "phone", "quantity": "quantity"};
@@ -212,6 +250,16 @@ function autofill_shipping_form(web_driver, shipping_fields){
       web_driver.set_field_value(field_name, shipping_fields[key]) && fill_input_success(field_name);
     }
   });
+}
+
+/** ----------- Recorder ----------- **/
+function save_element_selector(web_driver, element, page_type, field){
+  var id = element.getAttribute('id');
+  var selector = "#" + id;
+
+  if(id){
+    return web_driver.add_page_type_field_selector(page_type, field, selector, 'css');
+  }
 }
 
 /** ----------- Main script ----------- **/
@@ -236,29 +284,22 @@ $(document).ready(function(){
           shipping_fields.first_name = split_name[0];
           shipping_fields.last_name = split_name.splice(1).join(' ');
 
-
           var overlay_template = Handlebars.compile(body);
           var overlay_html = overlay_template(shipping_fields);
           web_driver.insert_overlay(overlay_html);
 
           // autofill_shipping_form(web_driver, shipping_fields);
 
-          // Create OverlayData object and cache jQuery selectors
+          // Create overlayData object and cache jQuery selectors
           overlay_data = new OverlayData();
-          overlay_data.overlay = $("#fulfillment-overlay");
-          overlay_data.autofill = overlay_data.overlay.find("#attempt-autofill");
-          overlay_data.copyCombo = overlay_data.overlay.find("#copy-combo");
-          overlay_data.skip = overlay_data.overlay.find("#skip-field");
-          overlay_data.reset = overlay_data.overlay.find("#reset-overlay");
-          overlay_data.recorder = overlay_data.overlay.find("#selector-recording-toggle");
-          overlay_data.fields = overlay_data.overlay.find("span.buyer-info");
-          overlay_data.labels = overlay_data.overlay.find("b.buyer-info");
+          overlay_data.cacheSelectors();
 
           /** ----------- Button click handlers ----------- **/
           /* -- Autofill button handler -- */
           $(overlay_data.autofill).click(overlay_data, function(event){
             autofill_shipping_form(web_driver, shipping_fields);
-            event.data.setIndex(1);
+            console.log(event.data.fields.length);
+            event.data.setIndex(0);
           });
 
           /* -- Copy combo .click handler -- */
@@ -266,7 +307,13 @@ $(document).ready(function(){
             .click(overlay_data, function(event) {
               // Skip the quantity field by starting at index 1
               event.data.setIndex(1);
-              $(event.data.copyCombo).text("Restart copy combo!");
+              $(event.data.copyCombo).text("Restart combo!");
+          });
+
+          /* -- Reset .click handler -- */
+          $(overlay_data.reset)
+            .click(overlay_data, function(event) {
+              event.data.resetAll();
           });
 
           /* -- Selector recording button .click handler -- */
@@ -283,21 +330,24 @@ $(document).ready(function(){
               }
           });
 
-          /* -- Skip field .click handler -- */
-          $(overlay_data.skip)
+          /* -- Previous field .click handler -- */
+          $(overlay_data.previous)
             .click(overlay_data, function(event) {
-              if(event.data.indexInRange() && event.data.incrementIndex()) {
-                fill_input_success(event.data.fields.get(event.data.getIndex() - 1))
+              if($(event.data.getPreviousField()).removeClass("success")) {
+                event.data.decrementIndex();
               }
             });
 
-          /* -- Reset .click handler -- */
-          $(overlay_data.reset)
+          /* -- Next field .click handler -- */
+          $(overlay_data.next)
             .click(overlay_data, function(event) {
-              event.data.setIndex(-1);
+              console.log(event.data.getNextField());
+              if(event.data.getNextField() && event.data.incrementIndex()) {
+                fill_input_success(event.data.getPreviousField())
+              }
             });
 
-          /* -- Fields and labels (click-to-copy) handlers -- */
+          /* -- Fields and labels (click to copy) handlers -- */
           $(overlay_data.fields)
             .click(overlay_data, function(event) {
               $(this).removeClass('success');
@@ -332,25 +382,37 @@ $(document).ready(function(){
           $(overlay_data.copyCombo).text("Start copy combo!");
         }
 
+        /** ----------- Keyboard shortcuts ----------- **/
+        $(document).keydown(function(event) {
+          if(!event.shiftKey && !event.ctrlKey) {
+            if(event.altKey) {
+              switch(event.keyCode) {
 
-        ///* -- Keyboard shortcuts -- */
-        //var altDown = false;
-        //
-        //$(document).keydown(altDown, function(event) {
-        //  if(event.keyCode == 18) {
-        //    event.altDown = true;
-        //  }
-        //  else if(event.altDown && event.keyCode == 81) {
-        //    console.log("ALT+Q keybind!"); // doesn't work! :(
-        //  }
-        //  console.log(event.keyCode);
-        //});
-        //$(document).keyup(altDown, function(event) {
-        //  if(event.keyCode == 18) {
-        //    event.altDown = false;
-        //  }
-        //  console.log(event.keyCode);
-        //});
+                // Alt+A: Attempt autofill
+                case(65):
+                  $(overlay_data.autofill).click();
+                  break;
+
+                // Alt+Q: Go back one field
+                case(81):
+                  $(overlay_data.previous).click();
+                  break;
+
+                // Alt+W: Skip one field
+                case(87):
+                  $(overlay_data.next).click();
+                  break;
+
+                // Alt+1: Reset all
+                case(49):
+                  $(overlay_data.reset).click();
+                  break;
+
+              }
+            }
+          }
+          console.log(event.keyCode);
+        });
 
         //
         //$("#billingAddress\\.address\\.stateSelect").on("click mousedown mouseup focus blur keydown change", function(e){
