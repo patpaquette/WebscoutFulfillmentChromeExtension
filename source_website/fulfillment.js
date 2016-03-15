@@ -1,6 +1,140 @@
 /**
  * Created by patricepaquette on 2016-02-22.
  */
+
+/** ----------- Overlay data ----------- **/
+function OverlayData() {
+  this._index = -1;
+
+  this.overlay = null;
+
+  // Buttons
+  this.autofill = null;
+  this.copyCombo = null;
+  this.reset = null;
+  this.previous = null;
+  this.next = null;
+  this.recorder = null;
+
+  // Fields and labels
+  this.fields = null;
+  this.labels = null;
+}
+
+/* ----------- Misc ----------- */
+OverlayData.prototype.cacheSelectors = function () {
+  this.overlay = $("#fulfillment-overlay");
+
+  // Buttons
+  this.autofill = this.overlay.find("#attempt-autofill");
+  this.copyCombo = this.overlay.find("#copy-combo");
+  this.reset = this.overlay.find("#reset-overlay");
+  this.recorder = this.overlay.find("#selector-recording-toggle");
+  this.previous = this.overlay.find("#previous-field");
+  this.next = this.overlay.find("#next-field");
+
+  // Fields and labels
+  this.fields = this.overlay.find("span.buyer-info");
+  this.labels = this.overlay.find("b.buyer-info");
+};
+
+OverlayData.prototype.getPreviousField = function () {
+  if (this.indexInRange(this._index - 1)) {
+    return this.fields.get(this._index - 1);
+  }
+};
+OverlayData.prototype.getNextField = function () {
+  if (this.indexInRange(this._index + 1)) {
+    return this.fields.get(this._index + 1);
+  }
+};
+OverlayData.prototype.resetAll = function () {
+  removeHighlight(this.fields);
+  this.fields.removeClass("success");
+  this._index = -1;
+  this.copyCombo.text("Start copy combo!");
+  console.log("reset successful");
+};
+
+/* ----------- Index manipulation ----------- */
+//  NOTE: should probably use switch/case
+// Change the index, highlight accordingly, and copy the new data (if any).
+// The quantity field is always skipped.
+OverlayData.prototype.setIndex = function (newIndex) {
+  if (typeof newIndex == "number") {
+    removeHighlight(this.fields);
+    if (this.indexInRange(newIndex)) {
+      var oldIndex = this._index;
+      this._index = newIndex;
+      // Make sure the new field hasn't been used already (if it has, go to the next field)
+      if ($(this.fields.get(newIndex)).hasClass("success") || ($(this.fields.get(newIndex)).attr("field-name") == "quantity")) {
+        console.log("skipping to " + (newIndex + 1));
+
+        if (newIndex < oldIndex) {
+          this.decrementIndex();
+        }
+        else if (newIndex > oldIndex) {
+          this.incrementIndex();
+        }
+        return;
+      }
+      // Successful index change within bounds
+      else {
+        highlight(this.fields.get(newIndex));
+        copyToClipboard(this.fields.get(newIndex));
+        console.log("index successfully changed! " + this._index);
+        return true;
+      }
+    }
+    else if (newIndex == this.fields.length || newIndex == -1) {
+      this._index = newIndex;
+      console.log("index now on bound " + this._index);
+      return;
+    }
+
+    console.log("index not in bounds!");
+    return false;
+  }
+  // If newIndex is a <b> or <span>, find the index corresponding to the span (or the closest one
+  // in the case of <b>) and call setIndex() with it
+  else if (typeof newIndex == "object") {
+    if ($(newIndex).prop("tagName") == "B" && $(newIndex).hasClass("buyer-info")) {
+      newIndex = $(newIndex).nextAll("span.buyer-info");
+      $(newIndex).removeClass("success");
+    }
+    if ($(newIndex).prop("tagName") == "SPAN" && $(newIndex).hasClass("buyer-info")) {
+      this.setIndex(this.fields.index(newIndex));
+      return;
+    }
+    else {
+      console.log("span error! index not changed!");
+      return false;
+    }
+  }
+  else {
+    console.log("type error! index not changed!");
+    return false;
+  }
+};
+OverlayData.prototype.indexInRange = function (index) {
+  if (typeof index == "number") {
+    return index >= 0 && index < this.fields.length;
+  }
+  else if (!index) {
+    return this._index >= 0 && this._index < this.fields.length;
+  }
+};
+OverlayData.prototype.incrementIndex = function () {
+  return this.setIndex(this._index + 1)
+};
+OverlayData.prototype.decrementIndex = function () {
+  return this.setIndex(this._index - 1)
+};
+OverlayData.prototype.getIndex = function () {
+  return this._index
+};
+
+/** ----------- Misc functions ----------- **/
 function extractDomain(url) {
   var domain;
   //find & remove protocol (http, ftp, etc.) and get domain
@@ -15,6 +149,7 @@ function extractDomain(url) {
   domain = domain.split(':')[0];
 
   domain = domain.replace('www.', '');
+  domain = domain.replace('secure2.', ''); // For Home Depot specifically
   domain = domain.replace('.com', '');
   domain = domain.replace('.net', '');
   domain = domain.replace('.org', '');
@@ -22,24 +157,23 @@ function extractDomain(url) {
   return domain;
 }
 
-function getWebDriver(source_domain){
-  try{
+function getWebDriver(source_domain) {
+  try {
     var capitalized_domain = source_domain.charAt(0).toUpperCase() + source_domain.slice(1);
     eval("var web_driver = new " + capitalized_domain + "WebDriver()");
 
     return web_driver;
   }
-  catch(e){
+  catch (e) {
     return new BaseWebDriver(source_domain);
   }
 }
 
+/** ----------- Utility ----------- **/
 function copyToClipboard(elem) {
   // Create hidden text element, if it doesn't already exist
   var targetId = "_hiddenCopyText_";
-  console.log(document.body);
-  console.log("element: ");
-  console.log(elem);
+
   var isInput = elem.tagName === "INPUT" || elem.tagName === "TEXTAREA";
   var origSelectionStart, origSelectionEnd;
   if (isInput) {
@@ -50,8 +184,7 @@ function copyToClipboard(elem) {
   } else {
     // Must use a temporary form element for the selection and copy
     target = document.getElementById(targetId);
-    console.log(target);
-    console.log(!target);
+
     if (!target) {
       var target = document.createElement("textarea");
       target.style.position = "absolute";
@@ -71,7 +204,7 @@ function copyToClipboard(elem) {
   var succeed;
   try {
     succeed = document.execCommand("copy");
-  } catch(e) {
+  } catch (e) {
     succeed = false;
   }
 
@@ -90,8 +223,13 @@ function copyToClipboard(elem) {
   return succeed;
 }
 
-function fill_input_success(field_name){
-  $("span[field-name=" + field_name + "]").addClass('success');
+function fill_input_success(field) {
+  if (typeof field == "string") {
+    $("span[field-name=" + field + "]").addClass('success');
+  }
+  else if (typeof field == "object") {
+    $(field).addClass('success');
+  }
 }
 
 function highlight(elem) {
@@ -102,56 +240,53 @@ function removeHighlight(elem) {
   $(elem).css("background-color", "");
 }
 
-function pasteStringInElem(elem){
+function pasteStringInElem(elem) {
   $(elem).select();
-  if(document.execCommand('paste')){
+  if (document.execCommand('paste')) {
     console.log("should have pasted!");
   }
-  else{
+  else {
     console.log("no paste");
   }
 }
 
-function save_element_selector(web_driver, element, page_type, field){
-  var id = element.getAttribute('id');
-  var selector = "#" + id;
+/** ----------- Autofill ----------- **/
+function autofill_shipping_form(web_driver, shipping_fields) {
+  var fulfillment_fields_map = {
+    "first_name": "firstname",
+    "last_name": "lastname",
+    "shipping_address_line_1": "address",
+    "shipping_city": "city",
+    "shipping_state": "state",
+    "shipping_postal_code": "postal_code",
+    "shipping_phone": "phone",
+    "quantity": "quantity"
+  };
 
-  if(id){
-    return web_driver.add_page_type_field_selector(page_type, field, selector, 'css');
-  }
-}
-
-function autofill_shipping_form(web_driver, shipping_fields){
-  var fulfillment_fields_map = {"first_name": "firstname", "last_name": "lastname", "shipping_address_line_1": "address", "shipping_city": "city", "shipping_state": "state", "shipping_postal_code": "postal_code", "shipping_phone": "phone", "quantity": "quantity"};
-
-  _.each(fulfillment_fields_map, function(field_name, key){
+  _.each(fulfillment_fields_map, function (field_name, key) {
     var value = shipping_fields[key];
 
-    if(value){
+    if (value) {
       web_driver.set_field_value(field_name, shipping_fields[key]) && fill_input_success(field_name);
     }
   });
 }
 
-function overlay_copy_field_value(element){
-
-}
-
-function highlight_prices_for_selection(){
+function highlight_prices_for_selection() {
   var price_regex = /^\$\d+\.\d\d$/m;
   var elem_matches = $("span:contains('$'), p:contains('$')")
-    .filter(function(){
+    .filter(function () {
       var trimmed_str = $(this).text().trim();
       var matches = trimmed_str.match(price_regex);
 
-      if(matches){
+      if (matches) {
         return trimmed_str.length === matches[0].length;
       }
 
       return false;
     })
     .addClass('selection-highlight')
-    .on("click.selection-highlight", function(){
+    .on("click.selection-highlight", function () {
       $("#cost-input")
         .attr('value', $(this).text().trim().replace('$', ''))
         .trigger('input');
@@ -162,21 +297,21 @@ function highlight_prices_for_selection(){
     });
 }
 
-function highlight_source_confirmation_for_selection(){
+function highlight_source_confirmation_for_selection() {
   var source_confirmation_regex = /[\d-]+/m;
   var elem_matches = $(document)
-    .filter(function(){
+    .filter(function () {
       var trimmed_str = $(this).text().trim();
       var matches = trimmed_str.match(source_confirmation_regex);
 
-      if(matches){
+      if (matches) {
         return trimmed_str.length === matches[0].length;
       }
 
       return false;
     })
     .addClass("selection-highlight")
-    .on("click.selection-highlight", function(){
+    .on("click.selection-highlight", function () {
       $("#confirmation-number")
         .attr('value', $(this).text().trim())
         .trigger('input');
@@ -187,19 +322,41 @@ function highlight_source_confirmation_for_selection(){
     });
 }
 
-//get web driver for this domain
-$(document).ready(function(){
-  var field_to_page_type_map = { "firstname": "shipping", "lastname": "shipping", "address": "shipping", "city": "shipping", "state": "shipping", "postal_code": "shipping", "phone": "shipping", "quantity": "product"};
+/** ----------- Recorder ----------- **/
+function save_element_selector(web_driver, element, page_type, field) {
+  var id = element.getAttribute('id');
+  var selector = "#" + id;
+
+  if (id) {
+    return web_driver.add_page_type_field_selector(page_type, field, selector, 'css');
+  }
+}
+
+/** ----------- Main script ----------- **/
+$(document).ready(function () {
+  var field_to_page_type_map = {
+    "firstname": "shipping",
+    "lastname": "shipping",
+    "address": "shipping",
+    "city": "shipping",
+    "state": "shipping",
+    "postal_code": "shipping",
+    "phone": "shipping",
+    "quantity": "product"
+  };
 
   var web_driver = getWebDriver(extractDomain(window.location.href));
 
-  web_driver.ready(function(){
+  web_driver.ready(function () {
     console.log("is ready");
-    chrome.runtime.sendMessage({get_order_data: true}, function(response){
-      $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function(body){
-        /* Fulfillment overlay */
+    chrome.runtime.sendMessage({get_order_data: true}, function (response) {
+      $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function (body) {
+        var overlay_data;
+        console.log(response);
+
+        /* -- Fulfillment overlay -- */
         // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
-        if($("#fulfillment-overlay").length == 0) {
+        if ($("#fulfillment-overlay").length == 0) {
           var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
 
           shipping_fields.quantity = response.order_data.quantity * response.order_data.aoi_quantity;
@@ -207,171 +364,190 @@ $(document).ready(function(){
           shipping_fields.first_name = split_name[0];
           shipping_fields.last_name = split_name.splice(1).join(' ');
 
-
           var overlay_template = Handlebars.compile(body);
           var overlay_html = overlay_template(shipping_fields);
           web_driver.insert_overlay(overlay_html);
 
-          //autofill_shipping_form(web_driver, shipping_fields);
+          // autofill_shipping_form(web_driver, shipping_fields);
 
-          $("#attempt-autofill").click(function(){
-            autofill_shipping_form(web_driver, shipping_fields);
-          })
-        }
-
-        // Prep payload for future .click events
-        var copy_index = -1;
-        var spans = $("#fulfillment-overlay span.buyer-info");
-        var data = {index:copy_index, spans:spans};
+          // Create overlayData object and cache jQuery selectors
+          overlay_data = new OverlayData();
+          overlay_data.cacheSelectors();
 
 
+          /* Copy combo handler */
+          function provision_inputs_event_handlers() {
+            /* -- Input .click handlers -- */
+            // Add .click handler with payload to all inputs
+            jQuery.each($("input"), function (index, input) {
+              if (!jQuery._data(input, "events")) {
+                $(input)
+                  .off('click.webscout-fulfillment')
+                  .on('click.webscout-fulfillment', overlay_data, function (event) {
+                    // Only change input values if copy combo or a span has been clicked
+                    if (event.data.indexInRange()) {
+                      fill_input_success(event.data.fields.get(event.data.getIndex()));
+                      pasteStringInElem(this);
+                      event.data.incrementIndex();
 
-        /* Copy combo handler */
-        function provision_inputs_event_handlers(){
-          /* Input .click handlers */
-          // Add .click handler with payload to all inputs
-          $("input")
-            .off('click.fulfillment_inputs')
-            .on('click.fulfillment_inputs', data, function (event) {
-              // Only change input values if copy combo or a span has been clicked
-              if(event.data.index >= 0 && event.data.index < event.data.spans.length) {
-                copyToClipboard($(event.data.spans).get(event.data.index));
-                pasteStringInElem(this);
-
-                var field_name = event.data.spans[event.data.index].getAttribute('field-name');
-                fill_input_success(field_name);
-
-                console.log(event.data.index);
-                // Remove previous span highlight and get the next one ready
-                removeHighlight($(event.data.spans).get(event.data.index));
-                event.data.index += 1;
-                highlight($(event.data.spans).get(event.data.index));
-
-                if(record_selectors){
-                  save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
-                }
+                      if (record_selectors) {
+                        save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
+                      }
+                    }
+                  });
               }
             });
-        }
+          }
 
-        $("#fulfillment-overlay button#copy-combo")
-          .click(data, function(event) {
-            // Reset highlights and index every time the copy combo button is clicked
-            event.data.index = 0;
-            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success, [field-name=quantity])");
-            removeHighlight(event.data.spans);
-            highlight(event.data.spans.get(0));
+          /** ----------- Button click handlers ----------- **/
+          /* -- Autofill button handler -- */
+          $(overlay_data.autofill).click(overlay_data, function (event) {
+            autofill_shipping_form(web_driver, shipping_fields);
+            console.log(event.data.fields.length);
+            event.data.setIndex(0);
+          });
 
-            $("#fulfillment-overlay button#copy-combo").text("Restart copy combo!");
+          /* -- Copy combo .click handler -- */
+          $(overlay_data.copyCombo).click(overlay_data, function (event) {
+            // Skip the quantity field by starting at index 1
+            event.data.setIndex(1);
+            $(event.data.copyCombo).text("Restart combo!");
             provision_inputs_event_handlers();
           });
 
-        /* Click to copy functionality */
-        // Add .click callback for spans
-        $("#fulfillment-overlay span.buyer-info")
-          .click(data, function(event) {
+          /* -- Reset .click handler -- */
+          $(overlay_data.reset)
+            .click(overlay_data, function (event) {
+              event.data.resetAll();
+            });
+
+          /* -- Selector recording button .click handler -- */
+          var record_selectors = false;
+          $(overlay_data.recorder)
+            .click(function () {
+              record_selectors = !record_selectors;
+
+              if (record_selectors) {
+                $(this).text("Turn off selector recording");
+              }
+              else {
+                $(this).text("Turn on selector recording");
+              }
+            });
+
+          /* -- Previous field .click handler -- */
+          $(overlay_data.previous)
+            .click(overlay_data, function (event) {
+              if ($(event.data.getPreviousField()).removeClass("success")) {
+                event.data.decrementIndex();
+              }
+            });
+
+          /* -- Next field .click handler -- */
+          $(overlay_data.next)
+            .click(overlay_data, function (event) {
+              console.log(event.data.getNextField());
+              if (event.data.getNextField() && event.data.incrementIndex()) {
+                fill_input_success(event.data.getPreviousField())
+              }
+            });
+
+          /* -- Fields and labels (click to copy) handlers -- */
+          $(overlay_data.fields)
+            .click(overlay_data, function (event) {
+              $(this).removeClass('success');
+              event.data.setIndex(this);
+              provision_inputs_event_handlers();
+            });
+          $(overlay_data.labels)
+            .click(overlay_data, function (event) {
+              event.data.setIndex(this);
+              provision_inputs_event_handlers();
+            });
+
+          /* Cost selection */
+          $("#select-cost-btn").click(function () {
+            highlight_prices_for_selection();
+          });
+
+          $("#cost-input").on('input', function () {
+            var price_regex = /\d+\.\d\d/m;
+
+            if (price_regex.test($(this).attr('value'))) {
+              $("#fetch-gift-card-button").prop('disabled', false);
+            }
+          });
+
+          /* Gift card */
+          $("#gift-card-number").click(function () {
             $(this).removeClass('success');
-            event.data.spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
-            event.data.index = event.data.spans.index(this);
-            removeHighlight(event.data.spans);
+            spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
+            removeHighlight(spans);
             highlight(this);
             copyToClipboard(this);
-            provision_inputs_event_handlers();
           });
 
-        // Add .click callback for labels
-        $("#fulfillment-overlay b.buyer-info")
-          .click(data, function(event) {
-            event.data.index = event.data.spans.index($(this).nextAll("span.buyer-info"));
-            removeHighlight(event.data.spans);
-            highlight(event.data.spans.get(event.data.index));
-            copyToClipboard(event.data.spans.get(event.data.index));
-            provision_inputs_event_handlers();
-          });
-        // Change the text of the button to indicate that everything is ready to go
-
-        /* Selector recording */
-        var record_selectors = false;
-        $("#selector-recording-toggle")
-          .click(function(){
-            record_selectors = !record_selectors;
-
-            if(record_selectors){
-              $(this).text("Turn off selector recording");
-            }
-            else{
-              $(this).text("Turn on selector recording");
-            }
+          $("#fetch-gift-card-button").click(function () {
+            $.get("https://45.55.18.141/gift_card/" + response.order_data.domain_host + "/" + Math.ceil(parseFloat($("#cost-input").attr('value'))) + "00", function (body) {
+              if (body.code) {
+                console.log("code found");
+                $("#gift-card-number").append(body.code);
+                $("#gift-card-pin").append(body.pin);
+              }
+              else {
+                console.log("code not found");
+                $("#gift-card-number").append("No gift card found");
+              }
+            }, "json");
           });
 
+          /* source confirmation */
+          $("#select-confirmation-btn").click(function () {
+            highlight_source_confirmation_for_selection();
+          });
 
-        /* Cost selection */
-        $("#select-cost-btn").click(function(){
-          highlight_prices_for_selection();
-        });
+          /* finished */
+          $("#finished-btn").click(function () {
 
-        $("#cost-input").on('input', function(){
-          var price_regex = /\d+\.\d\d/m;
+          });
 
-          if(price_regex.test($(this).attr('value'))){
-            $("#fetch-gift-card-button").prop('disabled', false);
-          }
-        });
+          // Change the text of the button to indicate that everything is ready to go
+          $(overlay_data.copyCombo).text("Start copy combo!");
 
-        /* Gift card */
-        $("#gift-card-number").click(function(){
-          $(this).removeClass('success');
-          spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
-          removeHighlight(spans);
-          highlight(this);
-          copyToClipboard(this);
-        });
 
-        $("#fetch-gift-card-button").click(function(){
-          $.get("https://45.55.18.141/gift_card/" + response.order_data.domain_host + "/" + Math.ceil(parseFloat($("#cost-input").attr('value'))) + "00", function(body){
-            if(body.code){
-              console.log("code found");
-              $("#gift-card-number").append(body.code);
-              $("#gift-card-pin").append(body.pin);
+          /** ----------- Keyboard shortcuts ----------- **/
+          $(document).keydown(function (event) {
+            if (!event.shiftKey && !event.ctrlKey) {
+              if (event.altKey) {
+                switch (event.keyCode) {
+
+                  // Alt+A: Attempt autofill
+                  case(65):
+                    $(overlay_data.autofill).click();
+                    break;
+
+                  // Alt+Q: Go back one field
+                  case(81):
+                    $(overlay_data.previous).click();
+                    break;
+
+                  // Alt+W: Skip one field
+                  case(87):
+                    $(overlay_data.next).click();
+                    break;
+
+                  // Alt+1: Reset all
+                  case(49):
+                    $(overlay_data.reset).click();
+                    break;
+
+                }
+              }
             }
-            else{
-              console.log("code not found");
-              $("#gift-card-number").append("No gift card found");
-            }
-          }, "json");
-        });
-
-        /* source confirmation */
-        $("#select-confirmation-btn").click(function(){
-          highlight_source_confirmation_for_selection();
-        });
-
-        /* finished */
-        $("#finished-btn").click(function(){
-
-        });
-
-        /* Keyboard shortcuts */
-        var altDown = false;
-
-        $(document).keydown(altDown, function(event) {
-          if(event.keyCode == 18) {
-            event.altDown = true;
-          }
-          else if(event.altDown && event.keyCode == 81) {
-            console.log("ALT+Q keybind!"); // doesn't work! :(
-          }
-          console.log(event.keyCode);
-        });
-        $(document).keyup(altDown, function(event) {
-          if(event.keyCode == 18) {
-            event.altDown = false;
-          }
-          console.log(event.keyCode);
-        });
-
-        $("#fulfillment-overlay button#copy-combo").text("Start copy combo!");
+          });
+        }
       });
     });
   });
 });
+

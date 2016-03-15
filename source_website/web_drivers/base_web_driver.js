@@ -35,7 +35,7 @@ BaseWebDriver.prototype._fetch_source_data = function(domain_host){
   this.page_type_data_p = Q.Promise(function(resolve, reject, notify){
     $.get(backend_api_endpoint + "/model/domains/" + domain_host + "/get_fulfillment_selectors", function(body){
       var data = body.data;
-      console.log(data);
+      //console.log(data);
       that.source_data = data;
       resolve(data);
     });
@@ -63,14 +63,14 @@ BaseWebDriver.prototype._resolve_page_type = function(source_data){
   });
 
   console.log("Page type : " + that.page_type);
-}
+};
 
 BaseWebDriver.prototype.ready = function(callback){
   console.log("called base ready");
   this.page_type_data_p.then(function(){
     callback();
   });
-}
+};
 
 //insert extension overlay into source page
 BaseWebDriver.prototype.insert_overlay = function(overlay_html){
@@ -85,7 +85,7 @@ BaseWebDriver.prototype.insert_overlay = function(overlay_html){
   }
 
   var currentWidth = html.css('width');
-  console.log(currentWidth);
+  //console.log(currentWidth);
   if(currentWidth == 'auto'){
     currentWidth = 0;
   }
@@ -97,19 +97,19 @@ BaseWebDriver.prototype.insert_overlay = function(overlay_html){
   var newLeft = (overlayWidth + currentLeft) + 'px';
   var newWidth = currentWidth - overlayWidth;
 
-  console.log(overlayWidth);
-  console.log("newwidth : " + newWidth);
+  //console.log(overlayWidth);
+  //console.log("newwidth : " + newWidth);
 
   html.css('position', 'relative');
   html.css('left', newLeft);
   html.css('width', newWidth);
   html.prepend(overlay);
-}
+};
 
 //provision source page with extra code (ex. event listeners)
 BaseWebDriver.prototype.provision = function(){
 
-}
+};
 
 //set field value
 BaseWebDriver.prototype.set_field_value = function(field, value){
@@ -123,7 +123,7 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
   }
   else if(!that.page_type_data){ //page type isn't known, so try with all page types
     selectors_data = _.reduce(that.source_data, function(result, page_type_data){
-      result.extend(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
+      $(result).extend(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
       return result;
     }, []);
   }
@@ -203,4 +203,4 @@ BaseWebDriver.prototype.add_page_type_field_selector = function(page_type, field
       resolve();
     });
   });
-}
+};
