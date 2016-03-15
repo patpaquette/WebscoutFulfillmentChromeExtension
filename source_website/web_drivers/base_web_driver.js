@@ -107,17 +107,21 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
 
   //check if we have selector data available
   if(!that.page_type_data && !that.source_data){
+    console.log("no selector");
     return false;
   }
   else if(!that.page_type_data){ //page type isn't known, so try with all page types
+    console.log("no page type");
     selectors_data = _.reduce(that.source_data, function(result, page_type_data){
       $(result).extend(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
       return result;
     }, []);
   }
   else{
+    console.log("selectors and page type available");
     selectors_data = _.filter(this.page_type_data["domainPageTypeSelectors"], {field: field});
   }
+  console.log(selectors_data);
 
   var css_selectors = _(selectors_data).filter({selector_type: 'css'}).map('selector').value();
   return this._fill_data_from_css_selectors(css_selectors, value);
@@ -181,12 +185,25 @@ BaseWebDriver.prototype.add_page_type_match_regex = function(page_type, match_re
   });
 }
 
+/** ----------- Recorder ----------- **/
+BaseWebDriver.prototype.save_element_selector = function(element, page_type, field_name){
+  console.log(element);
+  var id = element.getAttribute('id');
+  var selector = "#" + id;
+  console.log(selector);
+
+  if(id){
+    return this.add_page_type_field_selector(page_type, field_name, selector, 'css');
+  }
+};
+
 //set field selector
-BaseWebDriver.prototype.add_page_type_field_selector = function(page_type, field, selector, selector_type){
+BaseWebDriver.prototype.add_page_type_field_selector = function(page_type, field_name, selector, selector_type){
   var that = this;
+  console.log(" not yay " );
 
   return Q.promise(function(resolve, reject){
-    $.post(backend_api_endpoint + "/model/domains/" + that.domain_host + "/add_page_type_selector", {page_type: page_type, field: field, selector: selector, selector_type: selector_type}, function(body){
+    $.post(backend_api_endpoint + "/model/domains/" + that.domain_host + "/add_page_type_selector", {page_type: page_type, field: field_name, selector: selector, selector_type: selector_type}, function(body){
       console.log("yay!");
       resolve();
     });

@@ -6,6 +6,7 @@
 function WalmartWebDriver(){
   this._dropdown_resolvers = [walmart_chooser_dropdown_resolver];
 }
+WalmartWebDriver.prototype = new BaseWebDriver('walmart');
 
 /** helper function to have normalized states (required to check equality in dropdown values)**/
 function get_normalized_us_state(input){
@@ -17,7 +18,6 @@ function get_normalized_us_state(input){
   return state_map[input.toUpperCase()].toLowerCase();
 }
 
-WalmartWebDriver.prototype = new BaseWebDriver('walmart');
 
 /** must override base method to add additional constraints for readiness **/
 WalmartWebDriver.prototype.ready = function(callback){

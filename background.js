@@ -42,8 +42,9 @@ function injectExtensionScripts(module, tabId, callback){
         "bower_components/async/dist/async.js",
         "source_website/fulfillment.js",
         "source_website/web_drivers/base_web_driver.js",
-        "source_website/web_drivers/walmart_web_driver.js",
-        "source_website/web_drivers/toysrus_web_driver.js"
+        "source_website/web_drivers/homedepot_web_driver.js",
+        "source_website/web_drivers/toysrus_web_driver.js",
+        "source_website/web_drivers/walmart_web_driver.js"
       ];
 
       executeScripts(js_includes, tabId, callback);

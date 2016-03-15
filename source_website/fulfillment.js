@@ -37,7 +37,11 @@ OverlayData.prototype.cacheSelectors = function() {
   this.fields = this.overlay.find("span.buyer-info");
   this.labels = this.overlay.find("b.buyer-info");
 };
-
+OverlayData.prototype.getCurrentField = function() {
+  if(this.indexInRange()) {
+    return this.fields.get(this._index);
+  }
+};
 OverlayData.prototype.getPreviousField = function() {
   if(this.indexInRange(this._index - 1)) {
     return this.fields.get(this._index - 1);
@@ -47,6 +51,12 @@ OverlayData.prototype.getNextField = function() {
   if(this.indexInRange(this._index + 1)) {
     return this.fields.get(this._index + 1);
   }
+};
+OverlayData.prototype.selectQuantityField = function() {
+  var field = $(this.fields).find("span[field-name='quantity']");
+  removeHighlight(this.fields);
+  highlight(field);
+  copyToClipboard(field);
 };
 OverlayData.prototype.resetAll = function() {
   removeHighlight(this.fields);
@@ -257,15 +267,17 @@ function autofill_shipping_form(web_driver, shipping_fields){
   });
 }
 
-/** ----------- Recorder ----------- **/
-function save_element_selector(web_driver, element, page_type, field){
-  var id = element.getAttribute('id');
-  var selector = "#" + id;
-
-  if(id){
-    return web_driver.add_page_type_field_selector(page_type, field, selector, 'css');
-  }
-}
+///** ----------- Recorder ----------- **/
+//function save_element_selector(web_driver, element, page_type, field_name){
+//  console.log(element);
+//  var id = element.getAttribute('id');
+//  var selector = "#" + id;
+//  console.log(selector);
+//
+//  if(id){
+//    return web_driver.add_page_type_field_selector(page_type, field_name, selector, 'css');
+//  }
+//}
 
 /** ----------- Main script ----------- **/
 $(document).ready(function(){
@@ -328,6 +340,7 @@ $(document).ready(function(){
             .click(function(){
               record_selectors = !record_selectors;
 
+              // See input .click handlers
               if(record_selectors){
                 $(this).text("Turn off selector recording");
               }
@@ -370,15 +383,17 @@ $(document).ready(function(){
             if (!jQuery._data(input, "events")) {
               $(input)
                 .click(overlay_data, function (event) {
+                  var currentField;
                   // Only change input values if copy combo or a span has been clicked
-                  if (event.data.indexInRange()) {
-                    fill_input_success(event.data.fields.get(event.data.getIndex()));
+                  if(currentField = event.data.getCurrentField()) {
+                    if(record_selectors) {
+                      var field_name = $(currentField).attr("field-name");
+                      console.log(field_name);
+                      web_driver.save_element_selector(this, field_to_page_type_map[field_name], field_name);
+                    }
+                    fill_input_success(currentField);
                     pasteStringInElem(this);
                     event.data.incrementIndex();
-
-                    if (record_selectors) {
-                      save_element_selector(web_driver, this, field_to_page_type_map[field_name], field_name);
-                    }
                   }
               });
             }
