@@ -3,6 +3,18 @@
  */
 var backend_api_endpoint = "https://45.55.18.141";
 
+function pasteStringInElem(elem){
+  console.log("elem to paste in ");
+  console.log(elem);
+  $(elem).select();
+  if(document.execCommand('paste')){
+    console.log("should have pasted!");
+  }
+  else{
+    console.log("no paste");
+  }
+}
+
 function BaseWebDriver(domain_host){
   var that = this;
   this.domain_host = domain_host;

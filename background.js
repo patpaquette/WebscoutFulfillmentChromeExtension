@@ -20,19 +20,19 @@ function extractDomain(url) {
   return domain;
 }
 
-function set_order_data(order_data){
+function set_order_data(order_data) {
   console.log("set order data");
   current_order = order_data;
 }
 
-function executeScripts(js_includes, tabId, callback){
-  js_includes.forEach(function(url){
+function executeScripts(js_includes, tabId, callback) {
+  js_includes.forEach(function (url) {
     chrome.tabs.executeScript(tabId, {file: url}, callback);
   });
 }
 
-function injectExtensionScripts(module, tabId, callback){
-  switch(module){
+function injectExtensionScripts(module, tabId, callback) {
+  switch (module) {
     case "fulfillment":
       var js_includes = [
         "bower_components/lodash/lodash.js",
@@ -53,38 +53,38 @@ function injectExtensionScripts(module, tabId, callback){
 }
 
 //handle messages from content scripts
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-  console.log(message);
-  if(message.set_order_data){ //set order data for use in the rest of the process
-    set_order_data(message.order_data);
-  }
-  else if(message.get_order_data){ //get order data
-    console.log("get_order_data");
-    console.log(sender);
+(function () {
+  var webscout_orders_tab = null;
 
-    if(current_order){
-      var domain_re = /.*([^\.]+)(com|net|org|info|coop|int|co\.uk|org\.uk|ac\.uk|uk|__and so on__)$/g;
-      var order_source_domain = current_order.item_source_link.match(domain_re);
-      var current_domain = sender.url.match(domain_re);
+  chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    console.log(message);
 
-      if(order_source_domain == current_domain){
+    if (message.set_order_data) { //set order data for use in the rest of the process
+      current_order = null;
+      set_order_data(message.order_data);
+    }
+    else if (message.get_order_data) { //get order data
+      console.log("get_order_data");
+      console.log(sender);
+
+      if (current_order) {
         sendResponse({success: true, order_data: current_order});
       }
       else {
-        sendResponse({success: false, error_code: "domains_dont_match"});
+        sendResponse({success: false, error_code: "no_order"});
       }
     }
-    else{
-      sendResponse({success: false, error_code: "no_order"});
+    else if (message.source_fulfillment_done) {
+
     }
-  }
-});
+  });
+})();
 
 //check if tab url has same domain as the order source (this is required for websites that wipe out the url parameters, which can be used to determine whether the extension should be enabled)
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   //only check if there is an order to fulfill
   console.log(current_order);
-  if(current_order && changeInfo.status === 'complete'){
+  if (current_order && changeInfo.status === 'complete') {
     console.log(tab.url);
     console.log(current_order.item_source_link);
 
@@ -96,7 +96,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
     console.log(order_source_domain);
     console.log(current_domain);
     //if(order_source_domain === current_domain){
-    if(current_domain.indexOf(order_source_domain) >= 0){
+    if (current_domain.indexOf(order_source_domain) >= 0) {
       //inject fulfillment scripts
       injectExtensionScripts("fulfillment", tabId);
     }

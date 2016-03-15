@@ -27,7 +27,7 @@ WalmartWebDriver.prototype.ready = function(callback){
     console.log("checking if ready");
     switch(that.page_type){
       case "shipping":
-        var elements = $("section[data-view-name=shipping-address]")
+        var elements = $("section[data-view-name=shipping-address], section[data-view-name=payment]")
           .filter(function(index, element){
             return $(element).hasClass('expanded');
           });
