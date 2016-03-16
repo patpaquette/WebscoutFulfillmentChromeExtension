@@ -29,6 +29,11 @@ function BaseWebDriver(domain_host){
     });
 }
 
+BaseWebDriver.prototype.logout = function(){
+  //leave implementation details to child classes
+  return Q.when();
+}
+
 BaseWebDriver.prototype._fetch_source_data = function(domain_host){
   var that = this;
 
@@ -51,6 +56,7 @@ BaseWebDriver.prototype._resolve_page_type = function(source_data){
   _.some(source_data, function(page_type_data){
     return _.some(page_type_data["domainPageTypeMatches"], function(match_regex_data){
       var match_regex = match_regex_data["match_regex"]
+      console.log(match_regex);
 
       if(url.match(match_regex)){
         that.page_type = page_type_data["page_type"];
@@ -119,13 +125,18 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
 
   //check if we have selector data available
   if(!that.page_type_data && !that.source_data){
+    console.log("selector data not available");
     return false;
   }
   else if(!that.page_type_data){ //page type isn't known, so try with all page types
+    console.log("trying with unkown page type");
     selectors_data = _.reduce(that.source_data, function(result, page_type_data){
-      $(result).extend(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
+      console.log(page_type_data);
+      result = result.concat(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
       return result;
     }, []);
+
+    console.log(selectors_data);
   }
   else{
     selectors_data = _.filter(this.page_type_data["domainPageTypeSelectors"], {field: field});
@@ -133,6 +144,41 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
 
   var css_selectors = _(selectors_data).filter({selector_type: 'css'}).map('selector').value();
   return this._fill_data_from_css_selectors(css_selectors, value);
+}
+
+//get field value
+BaseWebDriver.prototype.get_field_value = function(field){
+  var that = this;
+  var selectors_data = [];
+
+  //check if we have selector data available
+  if(!that.page_type_data && !that.source_data){
+    console.log("selector data not available");
+    return false;
+  }
+  else if(!that.page_type_data){ //page type isn't known, so try with all page types
+    console.log("trying with unkown page type");
+    selectors_data = _.reduce(that.source_data, function(result, page_type_data){
+      console.log(page_type_data);
+      result = result.concat(_.filter(page_type_data["domainPageTypeSelectors"], {field: field}));
+      return result;
+    }, []);
+
+    console.log(selectors_data);
+  }
+  else{
+    selectors_data = _.filter(this.page_type_data["domainPageTypeSelectors"], {field: field});
+  }
+
+  var css_selectors = _(selectors_data).filter({selector_type: 'css'}).map('selector').value();
+  return _.reduce(css_selectors, function(ret, selector){
+    if(ret){ return ret; }
+
+    var text = $(selector).text().trim();
+
+    if(text === ""){ return null; }
+    return text;
+  }, null);
 }
 
 BaseWebDriver.prototype._fill_data_from_css_selectors = function(selectors, value){
@@ -174,6 +220,7 @@ BaseWebDriver.prototype._is_dropdown = function(element){
 
 BaseWebDriver.prototype._text_input_resolver = function(element, value){
   console.log("resolving text input");
+  $(element).val('');
   copyToClipboard($("<span>" + value + "</span>").get(0));
   pasteStringInElem(element);
 }

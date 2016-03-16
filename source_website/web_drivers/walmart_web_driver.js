@@ -19,6 +19,14 @@ function get_normalized_us_state(input){
 
 WalmartWebDriver.prototype = new BaseWebDriver('walmart');
 
+WalmartWebDriver.prototype.logout = function(){
+  return Q.promise(function(resolve, reject){
+    $.get("https://www.walmart.com/account/logout", function(){
+      resolve();
+    });
+  });
+}
+
 /** must override base method to add additional constraints for readiness **/
 WalmartWebDriver.prototype.ready = function(callback){
   var that = this;
