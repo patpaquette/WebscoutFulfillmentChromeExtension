@@ -62,6 +62,7 @@ function injectExtensionScripts(module, tabId, callback) {
     if (message.set_order_data) { //set order data for use in the rest of the process
       current_order = null;
       set_order_data(message.order_data);
+      webscout_orders_tab = sender.tab;
     }
     else if (message.get_order_data) { //get order data
       console.log("get_order_data");
@@ -75,7 +76,19 @@ function injectExtensionScripts(module, tabId, callback) {
       }
     }
     else if (message.source_fulfillment_done) {
+      if(webscout_orders_tab){
+        var attributes = {source_fulfillment_done: true};
 
+        _.each(_.pick(message ,["cost", "source_confirmation", "source_account_username"]), function(value, key){
+          console.log(key + ":" + value);
+          attributes[key] = value;
+        });
+        
+        console.log(attributes);
+
+        chrome.tabs.sendMessage(webscout_orders_tab.id, attributes);
+        chrome.tabs.remove(sender.tab.id);
+      }
     }
   });
 })();

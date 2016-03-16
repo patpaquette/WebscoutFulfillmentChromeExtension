@@ -18,11 +18,13 @@
 </style>
 
 <div id="fulfillment-overlay" style="display:block;position:fixed;top:0px;left:0px;width:250px;height:100%;z-index:99999;padding: 5px; color: black; background-color: lightgrey; text-align: left; float: left; overflow: scroll;">
-    <h1 style="color:black;;">Webscout Fulfillment</h1>
+    <h4 style="color:black;;">Webscout Fulfillment</h4>
     <br/>
+    <a href="{{item_source_link}}">Product page</a>
+    <br/><br/>
     <button id="attempt-autofill">Attempt Autofill (alt+A)</button><br/><br/>
     <button style="color:black" id="copy-combo">loading...</button> <button id="reset-overlay">Reset all (alt+1)</button><br/><br/>
-    <button id="selector-recording-toggle">Turn on selector recording</button><br/><br/>
+    <!--<button id="selector-recording-toggle">Turn on selector recording</button><br/><br/>-->
     <button id="previous-field"> << (alt+Q) </button> <button id="next-field"> (alt+W) >> </button>
 
     <p>
@@ -78,17 +80,22 @@
 
     <p><br/>
         <button id="select-cost-btn">Select Cost</button> <br/>
-        <input type="text" id="cost-input" placeholder="Cost"/><br/>
-        <button id="fetch-gift-card-button" disabled>Fetch gift card</button><br/>
+        <input type="text" id="cost-input" field-name="cost" placeholder="Cost"/><br/>
+        <!--<button id="fetch-gift-card-button" disabled>Fetch gift card</button><br/>-->
 
-        <span id="gift-card-number" class="buyer-info" field-name="gift-card-number" skip="true"></span><br/>
+        <!--<span id="gift-card-number" class="buyer-info" field-name="gift-card-number"></span><br/>-->
 
-        <span id="gift-card-pin" class="buyer-info" field-name="gift-card-pin" skip="true"></span><br/>
+        <!--<span id="gift-card-pin" class="buyer-info" field-name="gift-card-pin"></span>-->
     </p>
 
     <p>
         <button id="select-confirmation-btn">Select confirmation number</button><br/>
-        <input type="text" id="confirmation-number" placeholder="Confirmation Number" />
+        <input type="text" id="confirmation-number" field-name="source_confirmation" placeholder="Confirmation Number" />
+    </p>
+
+    <p>
+        <button id="select-account-email">Select Account Email</button><br/>
+        <input type="text" id="account-email" field-name="account_email" placeholder="Account Email" />
     </p>
     <p>
         <button id="finished-btn">Finished</button>

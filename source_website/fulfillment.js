@@ -296,6 +296,7 @@ function pasteStringInElem(elem) {
 
 /** ----------- Autofill ----------- **/
 function autofill_shipping_form(web_driver, shipping_fields) {
+  //autofill form values
   var fulfillment_fields_map = {
     "first_name": "firstname",
     "last_name": "lastname",
@@ -314,11 +315,26 @@ function autofill_shipping_form(web_driver, shipping_fields) {
       web_driver.set_field_value(field_name, shipping_fields[key]) && fill_input_success(field_name);
     }
   });
+
+  //autofill overlay values (cost, source confirmation, account email)
+  var fields_to_fill = ["cost", "source_confirmation", "account_email"];
+
+  _.each(fields_to_fill, function(field){
+    var val = web_driver.get_field_value(field);
+
+    if(field === 'cost'){
+      val = val.replace('$', '');
+    }
+
+    if(val && val.length > 0){
+      $("input[field-name='" + field + "']").val(val);
+    }
+  });
 }
 
 function highlight_prices_for_selection() {
   var price_regex = /^\$\d+\.\d\d$/m;
-  var elem_matches = $("span:contains('$'), p:contains('$')")
+  var elem_matches = $(":contains('$')")
     .filter(function () {
       var trimmed_str = $(this).text().trim();
       var matches = trimmed_str.match(price_regex);
@@ -342,11 +358,13 @@ function highlight_prices_for_selection() {
 }
 
 function highlight_source_confirmation_for_selection() {
-  var source_confirmation_regex = /[\d-]+/m;
-  var elem_matches = $(document)
+  var source_confirmation_regex = /#?[a-zA-Z0-9-]+#?[\d-]+/m;
+  var elem_matches = $("div, span, p")
     .filter(function () {
       var trimmed_str = $(this).text().trim();
       var matches = trimmed_str.match(source_confirmation_regex);
+
+      console.log(trimmed_str);
 
       if (matches) {
         return trimmed_str.length === matches[0].length;
@@ -357,6 +375,32 @@ function highlight_source_confirmation_for_selection() {
     .addClass("selection-highlight")
     .on("click.selection-highlight", function () {
       $("#confirmation-number")
+        .attr('value', $(this).text().trim())
+        .trigger('input');
+
+      elem_matches
+        .removeClass('selection-highlight')
+        .off('click.selection-highlight');
+    });
+}
+function highlight_account_email_for_selection() {
+  var account_email_regex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/m;
+  var elem_matches = $(":contains('@')")
+    .filter(function () {
+      var trimmed_str = $(this).text().trim();
+      var matches = trimmed_str.match(account_email_regex);
+
+      console.log(trimmed_str);
+
+      if (matches) {
+        return trimmed_str.length === matches[0].length;
+      }
+
+      return false;
+    })
+    .addClass("selection-highlight")
+    .on("click.selection-highlight", function () {
+      $("#account-email")
         .attr('value', $(this).text().trim())
         .trigger('input');
 
@@ -391,7 +435,7 @@ $(document).ready(function () {
         /* -- Fulfillment overlay -- */
         // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
         if ($("#fulfillment-overlay").length == 0) {
-          var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code"]);
+          var shipping_fields = _.pick(response.order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code", "item_source_link"]);
 
           shipping_fields.quantity = response.order_data.quantity * response.order_data.aoi_quantity;
           var split_name = shipping_fields.shipping_name.split(" ");
@@ -543,9 +587,17 @@ $(document).ready(function () {
             highlight_source_confirmation_for_selection();
           });
 
+          /* account email */
+          $("#select-account-email").click(function(){
+            highlight_account_email_for_selection();
+          });
+
           /* finished */
           $("#finished-btn").click(function () {
-
+            web_driver.logout()
+              .then(function(){
+                chrome.runtime.sendMessage({source_fulfillment_done: true, cost: $("#cost-input").val(), source_confirmation: $("#confirmation-number").val(), source_account_username: $("#account-email").val()});
+              });
           });
 
           // Change the text of the button to indicate that everything is ready to go
