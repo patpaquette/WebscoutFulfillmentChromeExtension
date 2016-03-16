@@ -28,74 +28,74 @@
     <button id="previous-field"> << (alt+Q) </button> <button id="next-field"> (alt+W) >> </button>
 
     <p>
-        <b class="buyer-info">Quantity</b> :
-        <span class="buyer-info" field-name="quantity" skip="true">{{quantity}}</span>
+        <b class="order-info">Quantity</b> :
+        <span class="order-info" field-name="quantity" skip="true">{{quantity}}</span>
     </p>
 
     <p>
-        <b class="buyer-info">First Name</b><br/>
-        <span class="buyer-info" field-name="firstname" skip="false">{{first_name}}</span>
+        <b class="order-info">First Name</b><br/>
+        <span class="order-info" field-name="firstname" skip="false">{{first_name}}</span>
     </p>
 
     <p>
-        <b class="buyer-info">Last Name</b><br/>
-        <span class="buyer-info" field-name="lastname" skip="false">{{last_name}}</span>
+        <b class="order-info">Last Name</b><br/>
+        <span class="order-info" field-name="lastname" skip="false">{{last_name}}</span>
     </p>
 
     <p>
-        <b class="buyer-info">Street Address</b><br/>
-        <span class="buyer-info" field-name="address" skip="false">{{shipping_address_line_1}}</span><br/>
+        <b class="order-info">Street Address</b><br/>
+        <span class="order-info" field-name="address" skip="false">{{shipping_address_line_1}}</span><br/>
         {{#if shipping_address_line_2}}
-        <span class="buyer-info" field-name="address" skip="false">{{shipping_address_line_2}}</span><br/>
+        <span class="order-info" field-name="address" skip="false">{{shipping_address_line_2}}</span><br/>
         {{/if}}
         {{#if shipping_address_line_3}}
-        <span class="buyer-info" field-name="address" skip="false">{{shipping_address_line_2}}</span>
+        <span class="order-info" field-name="address" skip="false">{{shipping_address_line_2}}</span>
         {{/if}}
     </p>
 
     <p>
-        <b class="buyer-info">City</b><br/>
-        <span class="buyer-info" field-name="city" skip="false">{{shipping_city}}</span>
+        <b class="order-info">City</b><br/>
+        <span class="order-info" field-name="city" skip="false">{{shipping_city}}</span>
     </p>
 
     <p>
-        <b class="buyer-info">State</b><br/>
-        <span class="buyer-info" field-name="state" skip="false">{{shipping_state}}</span>
+        <b class="order-info">State</b><br/>
+        <span class="order-info" field-name="state" skip="false">{{shipping_state}}</span>
     </p>
 
     <!--<p>-->
-        <!--<b class="buyer-info">Country</b><br/>-->
-        <!--<span class="buyer-info">{{shipping_country_code}}</span>-->
+        <!--<b class="order-info">Country</b><br/>-->
+        <!--<span class="order-info">{{shipping_country_code}}</span>-->
     <!--</p>-->
     <!---->
     <p>
-        <b class="buyer-info">Phone</b><br/>
-        <span class="buyer-info" field-name="phone" skip="false">{{shipping_phone}}</span>
+        <b class="order-info">Phone</b><br/>
+        <span class="order-info" field-name="phone" skip="false">{{shipping_phone}}</span>
     </p>
 
     <p>
-        <b class="buyer-info">Postal Code</b><br/>
-        <span class="buyer-info" field-name="postal_code" skip="false">{{shipping_postal_code}}</span>
+        <b class="order-info">Postal Code</b><br/>
+        <span class="order-info" field-name="postal_code" skip="false">{{shipping_postal_code}}</span>
     </p>
 
     <p><br/>
         <button id="select-cost-btn">Select Cost</button> <br/>
-        <input type="text" id="cost-input" field-name="cost" placeholder="Cost"/><br/>
+        <input type="text" id="cost-input" class="order-info" field-name="cost" placeholder="Cost"/><br/>
         <!--<button id="fetch-gift-card-button" disabled>Fetch gift card</button><br/>-->
 
-        <!--<span id="gift-card-number" class="buyer-info" field-name="gift-card-number"></span><br/>-->
+        <!--<span id="gift-card-number" class="order-info" field-name="gift-card-number"></span><br/>-->
 
-        <!--<span id="gift-card-pin" class="buyer-info" field-name="gift-card-pin"></span>-->
+        <!--<span id="gift-card-pin" class="order-info" field-name="gift-card-pin"></span>-->
     </p>
 
     <p>
         <button id="select-confirmation-btn">Select confirmation number</button><br/>
-        <input type="text" id="confirmation-number" field-name="source_confirmation" placeholder="Confirmation Number" />
+        <input type="text" id="confirmation-number" class="order-info" field-name="source_confirmation" placeholder="Confirmation Number" />
     </p>
 
     <p>
         <button id="select-account-email">Select Account Email</button><br/>
-        <input type="text" id="account-email" field-name="account_email" placeholder="Account Email" />
+        <input type="text" id="account-email" class="order-info" field-name="account_email" placeholder="Account Email" />
     </p>
     <p>
         <button id="finished-btn">Finished</button>

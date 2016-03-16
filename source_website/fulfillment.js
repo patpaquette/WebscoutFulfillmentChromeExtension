@@ -34,8 +34,8 @@ OverlayData.prototype.cacheSelectors = function () {
   this.next = this.overlay.find("#next-field");
 
   // Fields and labels
-  this.fields = this.overlay.find("span.buyer-info, input#cost-input, input#confirmation-number");
-  this.labels = this.overlay.find("b.buyer-info");
+  this.fields = this.overlay.find("span.order-info, input.order-info");
+  this.labels = this.overlay.find("b.order-info");
   console.log(this.fields);
 };
 OverlayData.prototype.getCurrentField = function() {
@@ -118,11 +118,11 @@ OverlayData.prototype.setIndex = function (newIndex) {
   // If newIndex is a <b> or <span>, find the index corresponding to the span (or the closest one
   // in the case of <b>) and call setIndex() with it
   else if (typeof newIndex == "object") {
-    if ($(newIndex).prop("tagName") == "B" && $(newIndex).hasClass("buyer-info")) {
-      newIndex = $(newIndex).nextAll("span.buyer-info");
+    if ($(newIndex).prop("tagName") == "B" && $(newIndex).hasClass("order-info")) {
+      newIndex = $(newIndex).nextAll("span.order-info");
       removeSuccess(newIndex);
     }
-    if (($(newIndex).prop("tagName") == "SPAN" || $(newIndex).prop("tagName") == "INPUT") && $(newIndex).hasClass("buyer-info")) {
+    if (($(newIndex).prop("tagName") == "SPAN" || $(newIndex).prop("tagName") == "INPUT") && $(newIndex).hasClass("order-info")) {
       this.setIndex(this.fields.index(newIndex));
     }
     else {
@@ -562,7 +562,7 @@ $(document).ready(function () {
           $("#gift-card-number").click(overlay_data, function (event) {
             $(this).removeClass('success');
             event.data.setIndex(this);
-            //spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
+            //spans = $("#fulfillment-overlay span.order-info:not(.success)");
             //removeHighlight(spans);
             //highlight(this);
             //copyToClipboard(this);
