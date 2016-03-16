@@ -27,38 +27,38 @@
 
     <p>
         <b class="buyer-info">Quantity</b> :
-        <span class="buyer-info" field-name="quantity">{{quantity}}</span>
+        <span class="buyer-info" field-name="quantity" skip="true">{{quantity}}</span>
     </p>
 
     <p>
         <b class="buyer-info">First Name</b><br/>
-        <span class="buyer-info" field-name="firstname">{{first_name}}</span>
+        <span class="buyer-info" field-name="firstname" skip="false">{{first_name}}</span>
     </p>
 
     <p>
         <b class="buyer-info">Last Name</b><br/>
-        <span class="buyer-info" field-name="lastname">{{last_name}}</span>
+        <span class="buyer-info" field-name="lastname" skip="false">{{last_name}}</span>
     </p>
 
     <p>
         <b class="buyer-info">Street Address</b><br/>
-        <span class="buyer-info" field-name="address">{{shipping_address_line_1}}</span><br/>
+        <span class="buyer-info" field-name="address" skip="false">{{shipping_address_line_1}}</span><br/>
         {{#if shipping_address_line_2}}
-        <span class="buyer-info" field-name="address">{{shipping_address_line_2}}</span><br/>
+        <span class="buyer-info" field-name="address" skip="false">{{shipping_address_line_2}}</span><br/>
         {{/if}}
         {{#if shipping_address_line_3}}
-        <span class="buyer-info" field-name="address">{{shipping_address_line_2}}</span>
+        <span class="buyer-info" field-name="address" skip="false">{{shipping_address_line_2}}</span>
         {{/if}}
     </p>
 
     <p>
         <b class="buyer-info">City</b><br/>
-        <span class="buyer-info" field-name="city">{{shipping_city}}</span>
+        <span class="buyer-info" field-name="city" skip="false">{{shipping_city}}</span>
     </p>
 
     <p>
         <b class="buyer-info">State</b><br/>
-        <span class="buyer-info" field-name="state">{{shipping_state}}</span>
+        <span class="buyer-info" field-name="state" skip="false">{{shipping_state}}</span>
     </p>
 
     <!--<p>-->
@@ -68,22 +68,22 @@
     <!---->
     <p>
         <b class="buyer-info">Phone</b><br/>
-        <span class="buyer-info" field-name="phone">{{shipping_phone}}</span>
+        <span class="buyer-info" field-name="phone" skip="false">{{shipping_phone}}</span>
     </p>
 
     <p>
         <b class="buyer-info">Postal Code</b><br/>
-        <span class="buyer-info" field-name="postal_code">{{shipping_postal_code}}</span>
+        <span class="buyer-info" field-name="postal_code" skip="false">{{shipping_postal_code}}</span>
     </p>
 
-    <p>
+    <p><br/>
         <button id="select-cost-btn">Select Cost</button> <br/>
         <input type="text" id="cost-input" placeholder="Cost"/><br/>
         <button id="fetch-gift-card-button" disabled>Fetch gift card</button><br/>
 
-        <span id="gift-card-number" class="buyer-info" field-name="gift-card-number"></span><br/>
+        <span id="gift-card-number" class="buyer-info" field-name="gift-card-number" skip="true"></span><br/>
 
-        <span id="gift-card-pin" class="buyer-info" field-name="gift-card-pin"></span>
+        <span id="gift-card-pin" class="buyer-info" field-name="gift-card-pin" skip="true"></span><br/>
     </p>
 
     <p>
