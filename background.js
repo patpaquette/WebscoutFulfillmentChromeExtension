@@ -77,7 +77,7 @@ function injectExtensionScripts(module, tabId, callback) {
     }
     else if (message.source_fulfillment_done) {
       if(webscout_orders_tab){
-        var attributes = {source_fulfillment_done: true};
+        var attributes = {source_fulfillment_done: true, source_data: message.source_data};
 
         _.each(_.pick(message ,["cost", "source_confirmation", "source_account_username"]), function(value, key){
           console.log(key + ":" + value);

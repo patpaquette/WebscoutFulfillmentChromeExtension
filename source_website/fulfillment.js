@@ -562,7 +562,7 @@ $(document).ready(function () {
           $("#finished-btn").click(function () {
             web_driver.logout()
               .then(function(){
-                chrome.runtime.sendMessage({source_fulfillment_done: true, cost: $("#cost-input").val(), source_confirmation: $("#confirmation-number").val(), source_account_username: $("#account-email").val()});
+                chrome.runtime.sendMessage({source_fulfillment_done: true, cost: $("#cost-input").val(), source_confirmation: $("#confirmation-number").val(), source_account_username: $("#account-email").val(), source_data: response.order_data});
               });
           });
 

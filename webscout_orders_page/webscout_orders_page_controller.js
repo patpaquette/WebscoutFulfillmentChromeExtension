@@ -40,6 +40,7 @@
 
     //add the fulfill onClick listener to each element
     source_links.click(fulfill);
+    source_links.css('background-color', 'lightblue');
 
     //modify the href
     source_links.each(function(){
@@ -75,7 +76,7 @@
       });
 
 
-      window.postMessage({message_type: "FROM_PAGE", event_type: "source_fulfillment_done", order_attributes: attributes}, "*")
+      window.postMessage({message_type: "FROM_PAGE", event_type: "source_fulfillment_done", order_attributes: attributes, source_data: message.source_data}, "*")
     }
   });
 
