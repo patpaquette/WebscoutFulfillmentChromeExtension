@@ -34,21 +34,32 @@ OverlayData.prototype.cacheSelectors = function () {
   this.next = this.overlay.find("#next-field");
 
   // Fields and labels
-  this.fields = this.overlay.find("span.buyer-info");
-  this.labels = this.overlay.find("b.buyer-info");
+  this.fields = this.overlay.find("span.order-info, input.order-info");
+  this.labels = this.overlay.find("b.order-info");
+  console.log(this.fields);
 };
 OverlayData.prototype.getCurrentField = function() {
-  if(this.indexInRange()) {
+  if (this.indexInRange()) {
     return this.fields.get(this._index);
   }
 };
-OverlayData.prototype.getPreviousField = function() {
-  if(this.indexInRange(this._index - 1)) {
+/* Get the closest field (descending) that matches the filter, starting from the current index.
+** If no filter is provided, get the previous field.*/
+OverlayData.prototype.getPreviousField = function(filter) {
+  if (this.indexInRange() && filter) {
+    return $(this.fields).slice(0, this._index).filter(filter).last();
+  }
+  else if (this.indexInRange(this._index - 1)) {
     return this.fields.get(this._index - 1);
   }
 };
-OverlayData.prototype.getNextField = function () {
-  if (this.indexInRange(this._index + 1)) {
+/* Get the closest field (ascending) that matches the filter, starting from the current index.
+** If no filter is provided, get the next field.*/
+OverlayData.prototype.getNextField = function (filter) {
+  if (this.indexInRange(this._index + 1) && filter) {
+    return $(this.fields).slice(this._index + 1).filter(filter).first();
+  }
+  else if (this.indexInRange(this._index + 1)) {
     return this.fields.get(this._index + 1);
   }
 };
@@ -76,14 +87,13 @@ OverlayData.prototype.setIndex = function (newIndex) {
     if (this.indexInRange(newIndex)) {
       var oldIndex = this._index;
       this._index = newIndex;
-      // Make sure the new field hasn't been used already (if it has, go to the next field)
-      if ($(this.fields.get(newIndex)).hasClass("success") || ($(this.fields.get(newIndex)).attr("field-name") == "quantity")) {
-        console.log("skipping to " + (newIndex + 1));
-
-        if (newIndex < oldIndex) {
+      if ($(this.fields.get(newIndex)).attr("skip") == "true") {
+        if(newIndex < oldIndex) {
+          console.log("skipping to " + (newIndex - 1));
           this.decrementIndex();
         }
         else if (newIndex > oldIndex) {
+          console.log("skipping to " + (newIndex + 1));
           this.incrementIndex();
         }
         return;
@@ -108,13 +118,12 @@ OverlayData.prototype.setIndex = function (newIndex) {
   // If newIndex is a <b> or <span>, find the index corresponding to the span (or the closest one
   // in the case of <b>) and call setIndex() with it
   else if (typeof newIndex == "object") {
-    if ($(newIndex).prop("tagName") == "B" && $(newIndex).hasClass("buyer-info")) {
-      newIndex = $(newIndex).nextAll("span.buyer-info");
-      $(newIndex).removeClass("success");
+    if ($(newIndex).prop("tagName") == "B" && $(newIndex).hasClass("order-info")) {
+      newIndex = $(newIndex).nextAll("span.order-info");
+      removeSuccess(newIndex);
     }
-    if ($(newIndex).prop("tagName") == "SPAN" && $(newIndex).hasClass("buyer-info")) {
+    if (($(newIndex).prop("tagName") == "SPAN" || $(newIndex).prop("tagName") == "INPUT") && $(newIndex).hasClass("order-info")) {
       this.setIndex(this.fields.index(newIndex));
-      return;
     }
     else {
       console.log("span error! index not changed!");
@@ -235,19 +244,44 @@ function copyToClipboard(elem) {
 
 function fill_input_success(field) {
   if (typeof field == "string") {
-    $("span[field-name=" + field + "]").addClass('success');
+    $("span[field-name=" + field + "]").addClass('success').attr("skip", "true");
   }
   else if (typeof field == "object") {
-    $(field).addClass('success');
+    $(field).addClass('success').attr("skip", "true");
   }
+}
+
+function removeSuccess(field) {
+  return $(field).removeClass("success").attr("skip", "false");
 }
 
 function highlight(elem) {
-  $(elem).css("background-color", "yellow");
+  var tagName = $(elem).prop("tagName");
+  switch(tagName) {
+    case("SPAN"):
+      $(elem).css("background-color", "yellow");
+      break;
+    case("BUTTON"):
+      $(elem).css("border-style", "inset");
+      break;
+    case("INPUT"):
+      $(elem).css("background-color", "yellow");
+      break;
+  }
 }
 
 function removeHighlight(elem) {
-  $(elem).css("background-color", "");
+  var tagName = $(elem).prop("tagName");
+  switch(tagName) {
+    case("SPAN"):
+      $(elem).css("background-color", "");
+      break;
+    case("BUTTON"):
+      $(elem).css("border-style", "");
+      break;
+    case("INPUT"):
+      $(elem).css("background-color", "");
+  }
 }
 
 function pasteStringInElem(elem) {
@@ -421,7 +455,7 @@ $(document).ready(function () {
           overlay_data.cacheSelectors();
 
 
-          /* Copy combo handler */
+          /** ----------- Handlers ----------- **/
           function provision_inputs_event_handlers() {
             /* -- Input .click handlers -- */
             // Add .click handler with payload to all inputs
@@ -431,7 +465,6 @@ $(document).ready(function () {
                   .off('click.webscout-fulfillment')
                   .on('click.webscout-fulfillment', overlay_data, function (event) {
                     var currentField;
-                    // Only change input values if copy combo or a span has been clicked
                     if(currentField = event.data.getCurrentField()) {
                       if(record_selectors) {
                         var field_name = $(currentField).attr("field-name");
@@ -447,7 +480,6 @@ $(document).ready(function () {
             });
           }
 
-          /** ----------- Button click handlers ----------- **/
           /* -- Autofill button handler -- */
           $(overlay_data.autofill).click(overlay_data, function (event) {
             autofill_shipping_form(web_driver, shipping_fields);
@@ -487,7 +519,8 @@ $(document).ready(function () {
           /* -- Previous field .click handler -- */
           $(overlay_data.previous)
             .click(overlay_data, function (event) {
-              if ($(event.data.getPreviousField()).removeClass("success")) {
+              console.log(event.data.getPreviousField("[skip='false'], .success"));
+              if (removeSuccess(event.data.getPreviousField("[skip='false'], .success"))) {
                 event.data.decrementIndex();
               }
             });
@@ -496,15 +529,16 @@ $(document).ready(function () {
           $(overlay_data.next)
             .click(overlay_data, function (event) {
               console.log(event.data.getNextField());
-              if (event.data.getNextField() && event.data.incrementIndex()) {
-                fill_input_success(event.data.getPreviousField())
+              if (event.data.getNextField()) {
+                fill_input_success(event.data.getCurrentField());
+                event.data.incrementIndex()
               }
             });
 
           /* -- Fields and labels (click to copy) handlers -- */
           $(overlay_data.fields)
             .click(overlay_data, function (event) {
-              $(this).removeClass('success');
+              removeSuccess(this);
               event.data.setIndex(this);
               provision_inputs_event_handlers();
             });
@@ -530,7 +564,7 @@ $(document).ready(function () {
           $("#gift-card-number").click(overlay_data, function (event) {
             $(this).removeClass('success');
             event.data.setIndex(this);
-            //spans = $("#fulfillment-overlay span.buyer-info:not(.success)");
+            //spans = $("#fulfillment-overlay span.order-info:not(.success)");
             //removeHighlight(spans);
             //highlight(this);
             //copyToClipboard(this);
@@ -540,12 +574,12 @@ $(document).ready(function () {
             $.get("https://45.55.18.141/gift_card/" + response.order_data.domain_host + "/" + Math.ceil(parseFloat($("#cost-input").attr('value'))) + "00", function (body) {
               if (body.code) {
                 console.log("code found");
-                $("#gift-card-number").append(body.code);
-                $("#gift-card-pin").append(body.pin);
+                $("#gift-card-number").append(body.code).prop("skip", "false");
+                $("#gift-card-pin").append(body.pin).prop("skip", "false");
               }
               else {
                 console.log("code not found");
-                $("#gift-card-number").append("No gift card found");
+                $("#gift-card-number").append("No gift card found").prop("skip", "true");
               }
             }, "json");
           });
