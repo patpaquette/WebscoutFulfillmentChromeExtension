@@ -267,6 +267,8 @@ function autofill_shipping_form(web_driver, shipping_fields) {
     "first_name": "firstname",
     "last_name": "lastname",
     "shipping_address_line_1": "address",
+    "shipping_address_line_2": "address_2",
+    "shipping_address_line_3": "address_3",
     "shipping_city": "city",
     "shipping_state": "state",
     "shipping_postal_code": "postal_code",
