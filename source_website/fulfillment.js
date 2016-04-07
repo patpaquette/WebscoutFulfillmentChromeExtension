@@ -324,7 +324,7 @@ function autofill_shipping_form(web_driver, shipping_fields) {
   _.each(fields_to_fill, function(field){
     var val = web_driver.get_field_value(field);
 
-    if(field === 'cost'){
+    if(field === 'cost' && val){
       val = val.replace('$', '');
     }
 
