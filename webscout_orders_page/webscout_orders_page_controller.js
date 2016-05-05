@@ -26,7 +26,12 @@
 
       //get the source that we want (from the link href)
       var source = _.find(data_row.domainItems, function(domainItem){
-        return source_link.indexOf(domainItem.item_source_link) >= 0;
+        if(source_link == "https://shop.upromise.com/e/members/benefits.php?xkeyword=walmart"){
+          return domainItem.domain_host == 'walmart';
+        }
+        else{
+          return source_link.indexOf(domainItem.item_source_link) >= 0;
+        }
       });
 
       _.assign(data_row, source);
@@ -52,6 +57,10 @@
       else{
         link += "?webscout_fulfillment=1&page=product";
       }
+      //
+      if(link.indexOf("walmart") >= 0){
+        link = "https://shop.upromise.com/e/members/benefits.php?xkeyword=walmart"
+      }
 
       $(this).attr('href', link);
     });
@@ -66,6 +75,7 @@
       var attributes = {
         uid: current_order.uid,
         aoi_real_cost: message.cost,
+        aoi_real_tax: message.taxes,
         source_confirmation: message.source_confirmation,
         source_account_username: message.source_account_username
       };

@@ -21,7 +21,10 @@
     "source_website/fulfillment.js",
     "source_website/web_drivers/base_web_driver.js",
     "webscout_orders_page/webscout_orders_page_controller.js",
-    "source_website/fulfillment_overlay.html"
+    "source_website/fulfillment_overlay.html",
+    "cashback_website/redirection.js",
+    "cashback_website/web_drivers/base_web_driver.js",
+    "cashback_website/web_drivers/upromise_driver"
   ],
   "permissions": [
     "activeTab",

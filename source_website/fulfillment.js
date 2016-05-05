@@ -319,12 +319,12 @@ function autofill_shipping_form(web_driver, shipping_fields) {
   });
 
   //autofill overlay values (cost, source confirmation, account email)
-  var fields_to_fill = ["cost", "source_confirmation", "account_email"];
+  var fields_to_fill = ["cost", "taxes", "source_confirmation", "account_email"];
 
   _.each(fields_to_fill, function(field){
     var val = web_driver.get_field_value(field);
 
-    if(field === 'cost' && val){
+    if((field === 'cost' || field === 'taxes') && val){
       val = val.replace('$', '');
     }
 
@@ -412,6 +412,13 @@ function highlight_account_email_for_selection() {
     });
 }
 
+function set_fulfillment_timeout(order_data){
+  setTimeout(function(){
+    chrome.runtime.sendMessage({fulfillment_timeout: true, order_data: order_data})
+  }, 1800000);
+}
+
+
 /** ----------- Main script ----------- **/
 $(document).ready(function () {
   var field_to_page_type_map = {
@@ -430,6 +437,8 @@ $(document).ready(function () {
   web_driver.ready(function () {
     console.log("is ready");
     chrome.runtime.sendMessage({get_order_data: true}, function (response) {
+      set_fulfillment_timeout(response.order_data);
+
       $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function (body) {
         var overlay_data;
         console.log(response);
@@ -598,7 +607,7 @@ $(document).ready(function () {
           $("#finished-btn").click(function () {
             web_driver.logout()
               .then(function(){
-                chrome.runtime.sendMessage({source_fulfillment_done: true, cost: $("#cost-input").val(), source_confirmation: $("#confirmation-number").val(), source_account_username: $("#account-email").val(), source_data: response.order_data});
+                chrome.runtime.sendMessage({source_fulfillment_done: true, cost: $("#cost-input").val(), taxes: $("#taxes-input").val(), source_confirmation: $("#confirmation-number").val(), source_account_username: $("#account-email").val(), source_data: response.order_data});
               });
           });
 
