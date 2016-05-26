@@ -32,7 +32,7 @@ function BaseWebDriver(domain_host){
 BaseWebDriver.prototype.logout = function(){
   //leave implementation details to child classes
   return Q.when();
-}
+};
 
 BaseWebDriver.prototype._fetch_source_data = function(domain_host){
   var that = this;
@@ -145,8 +145,9 @@ BaseWebDriver.prototype.set_field_value = function(field, value){
   console.log(selectors_data);
 
   var css_selectors = _(selectors_data).filter({selector_type: 'css'}).map('selector').value();
+  console.log(css_selectors);
   return this._fill_data_from_css_selectors(css_selectors, value);
-}
+};
 
 //get field value
 BaseWebDriver.prototype.get_field_value = function(field){
@@ -181,25 +182,27 @@ BaseWebDriver.prototype.get_field_value = function(field){
     if(text === ""){ return null; }
     return text;
   }, null);
-}
+};
 
 BaseWebDriver.prototype._fill_data_from_css_selectors = function(selectors, value){
   var success = false;
   var that = this;
 
   _.each(selectors, function(selector){
-    console.log(selector);
     var matches = $(selector);
-
+    console.log(selector);
     console.log(matches);
+
     if(matches.length > 0){
-      success = true;
-      that._resolve_element_value(matches.get(0), value);
+      _.each(matches, function(element, index){
+        success = true;
+        that._resolve_element_value(element, value);
+      });
     }
   });
 
   return success;
-}
+};
 
 BaseWebDriver.prototype._resolve_element_value = function(element, value){
   if(this._is_text_input(element)){
@@ -208,28 +211,28 @@ BaseWebDriver.prototype._resolve_element_value = function(element, value){
   else if(this._is_dropdown(element)){
     this._dropdown_resolver(element, value);
   }
-}
+};
 
 BaseWebDriver.prototype._is_text_input = function(element){
   var text_input_types = ["text", "tel"];
 
   return element.nodeName.toLowerCase() === 'input' && text_input_types.indexOf($(element).attr('type')) >= 0;
-}
+};
 
 BaseWebDriver.prototype._is_dropdown = function(element){
   return element.nodeName.toLowerCase() === 'select';
-}
+};
 
 BaseWebDriver.prototype._text_input_resolver = function(element, value){
   console.log("resolving text input");
   $(element).val('');
   copyToClipboard($("<span>" + value + "</span>").get(0));
   pasteStringInElem(element);
-}
+};
 
 BaseWebDriver.prototype._dropdown_resolver = function(element, value){
   throw new Error('Not implemented');
-}
+};
 
 //set page type match regex
 BaseWebDriver.prototype.add_page_type_match_regex = function(page_type, match_regex){
@@ -240,7 +243,7 @@ BaseWebDriver.prototype.add_page_type_match_regex = function(page_type, match_re
       resolve();
     });
   });
-}
+};
 
 /** ----------- Recorder ----------- **/
 BaseWebDriver.prototype.save_element_selector = function(element, page_type, field_name){
