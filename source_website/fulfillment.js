@@ -70,6 +70,7 @@ OverlayData.prototype.selectQuantityField = function() {
   copyToClipboard(field);
 };
 OverlayData.prototype.resetAll = function () {
+  this.cacheSelectors();
   removeHighlight(this.fields);
   this.fields.removeClass("success");
   this._index = -1;
@@ -314,6 +315,8 @@ function autofill_shipping_form(web_driver, shipping_fields) {
     var value = shipping_fields[key];
 
     if (value) {
+      console.log(field_name);
+      console.log(value);
       web_driver.set_field_value(field_name, shipping_fields[key]) && fill_input_success(field_name);
     }
   });
