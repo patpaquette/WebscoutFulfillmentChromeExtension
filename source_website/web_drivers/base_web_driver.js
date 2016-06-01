@@ -79,7 +79,7 @@ BaseWebDriver.prototype.ready = function(callback){
 };
 
 BaseWebDriver.prototype.is_landing_page = function(){
-  throw new Exception("Not implemented");
+  return false;
 }
 
 //insert extension overlay into source page
