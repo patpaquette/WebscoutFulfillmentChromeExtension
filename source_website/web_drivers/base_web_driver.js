@@ -78,6 +78,10 @@ BaseWebDriver.prototype.ready = function(callback){
   });
 };
 
+BaseWebDriver.prototype.is_landing_page = function(){
+  throw new Exception("Not implemented");
+}
+
 //insert extension overlay into source page
 BaseWebDriver.prototype.insert_overlay = function(overlay_html){
   var overlay = $(overlay_html);

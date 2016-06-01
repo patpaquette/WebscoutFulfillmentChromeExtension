@@ -39,6 +39,8 @@ $(document).ready(function(){
 
   web_driver.ready()
     .then(function(){
-      web_driver.redirect();
+      if(web_driver.is_redirect_page()){
+        web_driver.redirect();
+      }
     });
 });

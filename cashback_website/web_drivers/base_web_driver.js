@@ -14,6 +14,10 @@ BaseCashbackWebDriver.prototype.ready = function(callback){
   });
 }
 
+BaseCashbackWebDriver.prototype.is_redirect_page = function(){
+  throw new Exception("Not implemented");
+}
+
 BaseCashbackWebDriver.prototype.redirect = function(){
   throw new Exception("Not implemented");
 }

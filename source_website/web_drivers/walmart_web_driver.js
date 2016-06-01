@@ -60,6 +60,10 @@ WalmartWebDriver.prototype.ready = function(callback){
   });
 }
 
+WalmartWebDriver.prototype.is_landing_page = function(){
+  return /http:\/\/www\.walmart\.com\/\?/g.test(window.location.href);
+}
+
 /** override base method to parse input values **/
 WalmartWebDriver.prototype.set_field_value = function(field, value){
   if(field === 'state'){
