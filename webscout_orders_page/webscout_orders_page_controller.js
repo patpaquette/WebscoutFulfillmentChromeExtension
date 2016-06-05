@@ -103,7 +103,7 @@
         console.log(event.data.grid_data);
       }
       else if(event.data.event_type === "source_account_provision") {
-        console.log(event.data.account_data)
+        console.log(event.data.account_data);
       }
     }
   }, false);
