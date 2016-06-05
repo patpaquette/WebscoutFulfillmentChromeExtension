@@ -98,8 +98,12 @@
     if (event.data.message_type && (event.data.message_type == "FROM_PAGE")) {
       console.log("Content script received: " + event.data.event_type);
 
-      if(event.data.event_type === "kendo_grid_databound"){
+      if(event.data.event_type === "kendo_grid_databound") {
         create_fulfill_links(event.data.grid_data);
+        console.log(event.data.grid_data);
+      }
+      else if(event.data.event_type === "source_account_provision") {
+        console.log(event.data.account_data)
       }
     }
   }, false);
