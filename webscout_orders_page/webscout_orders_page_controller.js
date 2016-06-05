@@ -100,11 +100,13 @@
 
       if(event.data.event_type === "kendo_grid_databound") {
         create_fulfill_links(event.data.grid_data);
-        console.log(event.data.grid_data);
+        console.log(event.data);
+
+        // insert accounts code here (temporary)
       }
-      else if(event.data.event_type === "source_account_provision") {
-        console.log(event.data.account_data);
-      }
+      //else if(event.data.event_type === "source_account_provision") {
+      //  console.log(event.data.account_data);
+      //}
     }
   }, false);
 })();
