@@ -1,7 +1,8 @@
 /**
  * Created by patricepaquette on 2016-03-02.
  */
-var backend_api_endpoint = "https://45.55.18.141";
+//var backend_api_endpoint = "https://45.55.18.141";
+var backend_api_endpoint = "http://localhost:8888";
 
 function pasteStringInElem(elem){
   console.log("elem to paste in ");
@@ -55,7 +56,7 @@ BaseWebDriver.prototype._resolve_page_type = function(source_data){
 
   _.some(source_data, function(page_type_data){
     return _.some(page_type_data["domainPageTypeMatches"], function(match_regex_data){
-      var match_regex = match_regex_data["match_regex"]
+      var match_regex = match_regex_data["match_regex"];
       console.log(match_regex);
 
       if(url.match(match_regex)){
@@ -80,7 +81,7 @@ BaseWebDriver.prototype.ready = function(callback){
 
 BaseWebDriver.prototype.is_landing_page = function(){
   return false;
-}
+};
 
 //insert extension overlay into source page
 BaseWebDriver.prototype.insert_overlay = function(overlay_html){

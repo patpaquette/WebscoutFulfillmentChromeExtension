@@ -3,6 +3,7 @@
  */
 
 var current_order = null;
+var current_login = null;
 
 var supported_cashback_websites = ["upromise"];
 
@@ -19,12 +20,22 @@ function extractDomain(url) {
   //find & remove port number
   domain = domain.split(':')[0];
 
+  domain = domain.replace('www.', '');
+  domain = domain.replace('secure2.', ''); // For Home Depot specifically
+  domain = domain.replace('.com', '');
+  domain = domain.replace('.net', '');
+  domain = domain.replace('.org', '');
+
   return domain;
 }
 
 function set_order_data(order_data) {
   console.log("set order data");
   current_order = order_data;
+}
+function set_login_data(login_data) {
+  console.log("set login data");
+  current_login = login_data;
 }
 
 function executeScripts(js_includes, tabId, callback) {
@@ -67,28 +78,42 @@ function injectExtensionScripts(module, tabId, callback) {
   }
 }
 
-//handle messages from content scripts
+// handle messages from content scripts
 (function () {
   var webscout_orders_tab = null;
 
   chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     console.log(message);
 
-    if (message.set_order_data) { //set order data for use in the rest of the process
+    if (message.set_order_data) { // set order data for use in the rest of the process
+      if (message.login_data) {
+        set_login_data(message.login_data);
+      }
       current_order = null;
       set_order_data(message.order_data);
       webscout_orders_tab = sender.tab;
     }
+    // may not be used
+    else if (message.set_login_data) {
+      set_login_data(message.login_data);
+    }
     else if (message.get_order_data) { //get order data
       console.log("get_order_data");
       console.log(sender);
+      var response = {success: false, order_data: null, login_data: null};
 
+      // order
       if (current_order) {
-        sendResponse({success: true, order_data: current_order});
+        response.success = true;
+        response.order_data = current_order;
       }
-      else {
-        sendResponse({success: false, error_code: "no_order"});
-      }
+      else { response.error_code = "no_order"; }
+
+      // login
+      response.login_data = current_login;
+
+
+      sendResponse(response);
     }
     else if (message.source_fulfillment_done) {
       if(webscout_orders_tab){
