@@ -590,7 +590,7 @@ function init_fulfillment(web_driver, order_data, login_data){
       });
 
       /* finished */
-      $("#finished-btn").click(function () {
+      $("#finished-btn").click(function() {
         web_driver.logout()
           .then(function(){
             chrome.runtime.sendMessage({source_fulfillment_done: true, cost: $("#cost-input").val(), taxes: $("#taxes-input").val(), source_confirmation: $("#confirmation-number").val(), source_account_username: $("#account-email").val(), source_data: order_data});
@@ -602,7 +602,7 @@ function init_fulfillment(web_driver, order_data, login_data){
 
 
       /** ----------- Keyboard shortcuts ----------- **/
-      $(document).keydown(function (event) {
+      $(document).keydown(function(event) {
         if (!event.shiftKey && !event.ctrlKey) {
           if (event.altKey) {
             switch (event.keyCode) {
@@ -637,7 +637,7 @@ function init_fulfillment(web_driver, order_data, login_data){
 
 
 /** ----------- Main script ----------- **/
-$(document).ready(function () {
+$(document).ready(function() {
   var field_to_page_type_map = {
     "firstname": "shipping",
     "lastname": "shipping",
@@ -651,15 +651,15 @@ $(document).ready(function () {
 
   var web_driver = getWebDriver(extractDomain(window.location.href));
 
-  web_driver.ready(function () {
+  web_driver.ready(function() {
     console.log("is ready");
-    chrome.runtime.sendMessage({get_order_data: true}, function (response) {
+    chrome.runtime.sendMessage({get_order_and_login_data: true}, function (response) {
       set_fulfillment_timeout(response.order_data);
 
       if(web_driver.is_landing_page()) {
         window.location = response.order_data.item_source_link;
       }
-      else if(response.success){
+      else if(response.success) {
         init_fulfillment(web_driver, response.order_data, response.login_data);
       }
       else {

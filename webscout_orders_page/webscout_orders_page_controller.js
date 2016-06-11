@@ -13,13 +13,14 @@
       return {error: account_data.error};
     }
   }
-  //may not be used
+  //send login data to background page
   function send_login_data(account_data) {
+    console.log(get_login_data(account_data));
     chrome.runtime.sendMessage({set_login_data: true, login_data: get_login_data(account_data)});
   }
 
   //add the fulfillment buttons to the orders grid
-  function create_fulfill_links(grid_data, login_data){
+  function create_fulfill_links(grid_data){
     function fulfill(){
       //find order data
       var order_row_element = $(this).closest('tr');
@@ -51,7 +52,7 @@
       _.assign(data_row, source);
 
       //call background fulfillment function to set order data
-      chrome.runtime.sendMessage({set_order_data: true, order_data: data_row, login_data: login_data});
+      chrome.runtime.sendMessage({set_order_data: true, order_data: data_row});
     }
 
     //get all source links for orders
@@ -113,11 +114,12 @@
       console.log("Content script received: " + event.data.event_type);
 
       if(event.data.event_type === "kendo_grid_databound") {
-        create_fulfill_links(event.data.grid_data, get_login_data(event.data.account_data));
+        create_fulfill_links(event.data.grid_data);
       }
-      //else if(event.data.event_type === "source_account_provision") {
-      //  console.log(event.data.account_data);
-      //}
+      else if(event.data.event_type === "account_fetch") {
+        console.log(event.data.account_data);
+        send_login_data(event.data.account_data);
+      }
     }
   }, false);
 })();

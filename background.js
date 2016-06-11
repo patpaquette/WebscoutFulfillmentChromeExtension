@@ -86,18 +86,14 @@ function injectExtensionScripts(module, tabId, callback) {
     console.log(message);
 
     if (message.set_order_data) { // set order data for use in the rest of the process
-      if (message.login_data) {
-        set_login_data(message.login_data);
-      }
       current_order = null;
       set_order_data(message.order_data);
       webscout_orders_tab = sender.tab;
     }
-    // may not be used
     else if (message.set_login_data) {
       set_login_data(message.login_data);
     }
-    else if (message.get_order_data) { //get order data
+    else if (message.get_order_and_login_data) { //get order and login data
       console.log("get_order_data");
       console.log(sender);
       var response = {success: false, order_data: null, login_data: null};
@@ -112,7 +108,7 @@ function injectExtensionScripts(module, tabId, callback) {
       // login
       response.login_data = current_login;
 
-
+      console.log(response);
       sendResponse(response);
     }
     else if (message.source_fulfillment_done) {
