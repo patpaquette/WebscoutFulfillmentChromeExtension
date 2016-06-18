@@ -3,7 +3,7 @@
  */
 
 var current_order = null;
-var current_login = null;
+var current_account = null;
 
 var supported_cashback_websites = ["upromise"];
 
@@ -33,9 +33,10 @@ function set_order_data(order_data) {
   console.log("set order data");
   current_order = order_data;
 }
-function set_login_data(login_data) {
-  console.log("set login data");
-  current_login = login_data;
+function set_account_data(account_data) {
+  console.log("set account data");
+  console.log(account_data);
+  current_account = account_data;
 }
 
 function executeScripts(js_includes, tabId, callback) {
@@ -90,13 +91,14 @@ function injectExtensionScripts(module, tabId, callback) {
       set_order_data(message.order_data);
       webscout_orders_tab = sender.tab;
     }
-    else if (message.set_login_data) {
-      set_login_data(message.login_data);
+    else if (message.set_account_data) {
+      console.log(message);
+      set_account_data(message.account_data);
     }
-    else if (message.get_order_and_login_data) { //get order and login data
+    else if (message.get_order_and_account_data) { //get order and login data
       console.log("get_order_data");
       console.log(sender);
-      var response = {success: false, order_data: null, login_data: null};
+      var response = {success: false, order_data: null, account_data: null};
 
       // order
       if (current_order) {
@@ -106,14 +108,15 @@ function injectExtensionScripts(module, tabId, callback) {
       else { response.error_code = "no_order"; }
 
       // login
-      response.login_data = current_login;
+      response.account_data = current_account;
 
       console.log(response);
       sendResponse(response);
     }
     else if (message.source_fulfillment_done) {
+      console.log("FULFILLMENT FINISHED");
       if(webscout_orders_tab){
-        var attributes = {source_fulfillment_done: true, source_data: message.source_data};
+        var attributes = {source_fulfillment_done: true, source_data: message.source_data, source_account_data: message.source_account_data};
 
         _.each(_.pick(message ,["cost", "taxes", "source_confirmation", "source_account_username"]), function(value, key){
           console.log(key + ":" + value);
@@ -123,6 +126,7 @@ function injectExtensionScripts(module, tabId, callback) {
         console.log(attributes);
 
         current_order = null;
+        current_account = null;
         chrome.tabs.sendMessage(webscout_orders_tab.id, attributes);
         chrome.tabs.remove(sender.tab.id);
       }
@@ -153,12 +157,13 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     console.log(order_source_domain);
     console.log(current_domain);
 
-    if (current_domain.indexOf(order_source_domain) >= 0) { //check if we're on a retailer website
-      //inject fulfillment scripts
-      injectExtensionScripts("fulfillment", tabId);
-    }
-    else if(supported_cashback_websites.indexOf(current_domain)){ //check if we're on a callback website
-      injectExtensionScripts("cashback", tabId);
-    }
+    //if (current_domain.indexOf(order_source_domain) >= 0) { //check if we're on a retailer website
+    //  //inject fulfillment scripts
+    //  injectExtensionScripts("fulfillment", tabId);
+    //}
+    //else if(supported_cashback_websites.indexOf(current_domain)){ //check if we're on a callback website
+    //  injectExtensionScripts("cashback", tabId);
+    //}
+    injectExtensionScripts("fulfillment", tabId);
   }
 });

@@ -421,20 +421,20 @@ function set_fulfillment_timeout(order_data){
   }, 1800000);
 }
 
-function init_fulfillment(web_driver, order_data, login_data){
+function init_fulfillment(web_driver, order_data, account_data){
   $.get(chrome.extension.getURL("source_website/fulfillment_overlay.html"), function (body) {
     var overlay_data;
     /* -- Fulfillment overlay -- */
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
     if ($("#fulfillment-overlay").length == 0) {
       var shipping_fields = _.pick(order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code", "item_source_link"]);
-      console.log(login_data);
+      console.log(account_data);
       shipping_fields.quantity = order_data.quantity * order_data.aoi_quantity;
-      if(!login_data.error) {
-        shipping_fields.username = login_data.username;
-        shipping_fields.password = login_data.password;
+      if(!_.has(account_data, "error")) {
+        shipping_fields.username = account_data.username;
+        shipping_fields.password = account_data.password;
       }
-      else { shipping_fields.username = login_data.error; }
+      else { shipping_fields.username = account_data.error; }
       var split_name = shipping_fields.shipping_name.split(" ");
       shipping_fields.first_name = split_name[0];
       shipping_fields.last_name = split_name.splice(1).join(' ');
@@ -593,7 +593,16 @@ function init_fulfillment(web_driver, order_data, login_data){
       $("#finished-btn").click(function() {
         web_driver.logout()
           .then(function(){
-            chrome.runtime.sendMessage({source_fulfillment_done: true, cost: $("#cost-input").val(), taxes: $("#taxes-input").val(), source_confirmation: $("#confirmation-number").val(), source_account_username: $("#account-email").val(), source_data: order_data});
+            console.log(order_data);
+            chrome.runtime.sendMessage({
+              source_fulfillment_done: true,
+              cost: $("#cost-input").val(),
+              taxes: $("#taxes-input").val(),
+              source_confirmation: $("#confirmation-number").val(),
+              source_account_username: $("#account-email").val(),
+              source_account_data: account_data,
+              source_data: order_data
+            });
           });
       });
 
@@ -653,14 +662,14 @@ $(document).ready(function() {
 
   web_driver.ready(function() {
     console.log("is ready");
-    chrome.runtime.sendMessage({get_order_and_login_data: true}, function (response) {
+    chrome.runtime.sendMessage({get_order_and_account_data: true}, function (response) {
       set_fulfillment_timeout(response.order_data);
 
       if(web_driver.is_landing_page()) {
         window.location = response.order_data.item_source_link;
       }
       else if(response.success) {
-        init_fulfillment(web_driver, response.order_data, response.login_data);
+        init_fulfillment(web_driver, response.order_data, response.account_data);
       }
       else {
         console.log("ERROR INITIATING FULFILLMENT: " + response.error_code);

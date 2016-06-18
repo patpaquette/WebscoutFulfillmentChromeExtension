@@ -19,6 +19,20 @@ function get_normalized_us_state(input){
 }
 
 
+WalmartWebDriver.prototype.login = function(username, password){
+  var data = {
+    "username": username,
+    "password": password,
+    "captcha": {
+      "sensorData": ""
+    }
+  };
+  return Q.promise(function(resolve, reject){
+    $.post("https://www.walmart.com/account/electrode/api/signin", data, function(data, status, xhr){
+      resolve();
+    });
+  });
+}
 WalmartWebDriver.prototype.logout = function(){
   return Q.promise(function(resolve, reject){
     $.get("https://www.walmart.com/account/logout", function(){

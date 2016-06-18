@@ -4,19 +4,10 @@
 (function(){
   var current_order = null;
 
-  //pick the right account data to add to fulfill link message
-  function get_login_data(account_data) {
-    if(!account_data.error) {
-      return {username: account_data.username, password: account_data.password};
-    }
-    else {
-      return {error: account_data.error};
-    }
-  }
   //send login data to background page
-  function send_login_data(account_data) {
-    console.log(get_login_data(account_data));
-    chrome.runtime.sendMessage({set_login_data: true, login_data: get_login_data(account_data)});
+  function send_account_data(account_data) {
+    console.log(account_data);
+    chrome.runtime.sendMessage({set_account_data: true, account_data: account_data});
   }
 
   //add the fulfillment buttons to the orders grid
@@ -92,7 +83,7 @@
         aoi_real_cost: message.cost,
         aoi_real_tax: message.taxes,
         source_confirmation: message.source_confirmation,
-        source_account_username: message.source_account_username
+        source_account_username: message.source_account_username,
       };
 
       attributes = _.pickBy(attributes, function(val, key){
@@ -101,7 +92,7 @@
       });
 
 
-      window.postMessage({message_type: "FROM_PAGE", event_type: "source_fulfillment_done", order_attributes: attributes, source_data: message.source_data}, "*")
+      window.postMessage({message_type: "FROM_PAGE", event_type: "source_fulfillment_done", order_attributes: attributes, source_data: message.source_data, source_account_data: message.source_account_data}, "*")
     }
   });
 
@@ -117,8 +108,8 @@
         create_fulfill_links(event.data.grid_data);
       }
       else if(event.data.event_type === "account_fetch") {
-        console.log(event.data.account_data);
-        send_login_data(event.data.account_data);
+        console.log(event.data);
+        send_account_data(event.data.account_data);
       }
     }
   }, false);
