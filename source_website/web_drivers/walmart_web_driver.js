@@ -20,19 +20,34 @@ function get_normalized_us_state(input){
 
 
 WalmartWebDriver.prototype.login = function(username, password){
-  var data = {
-    "username": username,
-    "password": password,
-    "captcha": {
-      "sensorData": ""
-    }
+  username = "paquette.py@gmail.com";
+  password = "kasovski321";
+
+  var settings = {
+    type: "POST",
+    url: "https://www.walmart.com/account/electrode/api/signin",
+    data: JSON.stringify({
+      username: username,
+      password: password,
+      captcha: {
+        sensorData: ""
+      }
+    }),
+    success: function(data, status, xhr) {
+      console.log(data);
+      console.log(status);
+      console.log(xhr);
+    },
+    dataType: "json",
+    contentType: "application/json"
   };
-  return Q.promise(function(resolve, reject){
-    $.post("https://www.walmart.com/account/electrode/api/signin", data, function(data, status, xhr){
-      resolve();
-    });
+
+  return Q.promise(function(resolve, reject) {
+    $.ajax(settings);
+    resolve();
   });
-}
+};
+
 WalmartWebDriver.prototype.logout = function(){
   return Q.promise(function(resolve, reject){
     $.get("https://www.walmart.com/account/logout", function(){

@@ -428,7 +428,6 @@ function init_fulfillment(web_driver, order_data, account_data){
     // Build fulfillment overlay (shows shipping address, name, etc) if it hasn't been done already
     if ($("#fulfillment-overlay").length == 0) {
       var shipping_fields = _.pick(order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code", "item_source_link"]);
-      console.log(account_data);
       shipping_fields.quantity = order_data.quantity * order_data.aoi_quantity;
       if(!_.has(account_data, "error")) {
         shipping_fields.username = account_data.username;
@@ -449,6 +448,7 @@ function init_fulfillment(web_driver, order_data, account_data){
       overlay_data = new OverlayData();
       overlay_data.cacheSelectors();
 
+      web_driver.login("placeholder", "placeholder");
 
       /** ----------- Handlers ----------- **/
       function provision_inputs_event_handlers() {
@@ -659,6 +659,7 @@ $(document).ready(function() {
   };
 
   var web_driver = getWebDriver(extractDomain(window.location.href));
+
 
   web_driver.ready(function() {
     console.log("is ready");
