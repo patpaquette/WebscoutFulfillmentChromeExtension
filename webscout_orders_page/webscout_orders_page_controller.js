@@ -58,9 +58,9 @@
         link += "?webscout_fulfillment=1&page=product";
       }
       //
-        if(link.indexOf("walmart") >= 0){
-          link = "https://shop.upromise.com/e/members/benefits.php?xkeyword=walmart"
-        }
+      //  if(link.indexOf("walmart") >= 0){
+      //    link = "https://shop.upromise.com/e/members/benefits.php?xkeyword=walmart"
+      //  }
 
       $(this).attr('href', link);
     });
