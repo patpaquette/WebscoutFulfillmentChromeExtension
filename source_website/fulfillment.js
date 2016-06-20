@@ -178,13 +178,16 @@ function extractDomain(url) {
 }
 
 function getWebDriver(source_domain) {
+  console.log(source_domain);
   try {
     var capitalized_domain = source_domain.charAt(0).toUpperCase() + source_domain.slice(1);
+    console.log(capitalized_domain);
     eval("var web_driver = new " + capitalized_domain + "WebDriver()");
 
     return web_driver;
   }
   catch (e) {
+    console.log(e);
     return new BaseWebDriver(source_domain);
   }
 }
@@ -285,12 +288,17 @@ function removeHighlight(elem) {
   }
 }
 
-function pasteStringInElem(elem) {
+function pasteStringInElem(elem, overwrite){
+  console.log("elem to paste in ");
+  console.log(elem);
   $(elem).select();
-  if (document.execCommand('paste')) {
+  if(overwrite) {
+    $(elem).val("");
+  }
+  if(document.execCommand('paste')){
     console.log("should have pasted!");
   }
-  else {
+  else{
     console.log("no paste");
   }
 }
@@ -332,6 +340,8 @@ function autofill_shipping_form(web_driver, shipping_fields) {
     }
 
     if(val && val.length > 0){
+      console.log(field);
+      console.log(val);
       $("input[field-name='" + field + "']").val(val);
     }
   });
@@ -462,7 +472,7 @@ function init_fulfillment(web_driver, order_data){
                     web_driver.save_element_selector(this, field_to_page_type_map[field_name], field_name);
                   }
                   fill_input_success(currentField);
-                  pasteStringInElem(this);
+                  pasteStringInElem(this, true);
                   event.data.incrementIndex();
                 }
               });
@@ -645,6 +655,7 @@ $(document).ready(function () {
   };
 
   var web_driver = getWebDriver(extractDomain(window.location.href));
+  console.log(web_driver);
 
   web_driver.ready(function () {
     console.log("is ready");
