@@ -6,6 +6,8 @@
 
   //add the fulfillment buttons to the orders grid
   function create_fulfill_links(grid_data){
+    console.log("grid data");
+    console.log(grid_data);
     function fulfill(){
       //find order data
       var order_row_element = $(this).closest('tr');
@@ -22,7 +24,13 @@
 
       //clone because we want to modify without changing the initial data
       current_order = data_row;
+
+      console.log("Current order");
+      console.log(current_order);
       data_row = _.cloneDeep(data_row);
+      data_row.quantity = current_order.quantity;
+      console.log(current_order);
+      console.log(data_row);
 
       //get the source that we want (from the link href)
       var source = _.find(data_row.domainItems, function(domainItem){
@@ -33,6 +41,10 @@
           return source_link.indexOf(domainItem.item_source_link) >= 0;
         }
       });
+
+      console.log("before assign");
+      console.log(data_row);
+      console.log(source);
 
       _.assign(data_row, source);
 
