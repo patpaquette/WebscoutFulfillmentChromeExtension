@@ -448,7 +448,7 @@ function init_fulfillment(web_driver, order_data, account_data){
       overlay_data = new OverlayData();
       overlay_data.cacheSelectors();
 
-      web_driver.login("placeholder", "placeholder");
+      web_driver.login(account_data.username, account_data.password);
 
       /** ----------- Handlers ----------- **/
       function provision_inputs_event_handlers() {

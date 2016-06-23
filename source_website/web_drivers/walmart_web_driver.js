@@ -20,9 +20,8 @@ function get_normalized_us_state(input){
 
 
 WalmartWebDriver.prototype.login = function(username, password){
-  username = "paquette.py@gmail.com";
-  password = "kasovski321";
-
+  console.log(username);
+  console.log(password);
   var settings = {
     type: "POST",
     url: "https://www.walmart.com/account/electrode/api/signin",

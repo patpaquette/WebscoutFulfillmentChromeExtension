@@ -1,8 +1,8 @@
 /**
  * Created by patricepaquette on 2016-03-02.
  */
-//var backend_api_endpoint = "https://45.55.18.141";
-var backend_api_endpoint = "http://localhost:8888";
+var backend_api_endpoint = "https://45.55.18.141";
+//var backend_api_endpoint = "http://localhost:8888";
 
 function pasteStringInElem(elem){
   console.log("elem to paste in ");
