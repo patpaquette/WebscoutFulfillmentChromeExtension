@@ -82,6 +82,7 @@ function injectExtensionScripts(module, tabId, callback) {
 // handle messages from content scripts
 (function () {
   var webscout_orders_tab = null;
+  var source_tab = null;
 
   chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     console.log(message);
@@ -99,6 +100,7 @@ function injectExtensionScripts(module, tabId, callback) {
       console.log("get_order_data");
       console.log(sender);
       var response = {success: false, order_data: null, account_data: null};
+      source_tab = sender.tab;
 
       // order
       if (current_order) {
@@ -116,18 +118,20 @@ function injectExtensionScripts(module, tabId, callback) {
     else if (message.source_fulfillment_done) {
       console.log("FULFILLMENT FINISHED");
       if(webscout_orders_tab){
-        var attributes = {source_fulfillment_done: true, source_data: message.source_data, source_account_data: message.source_account_data};
+        var attributes_fulfillment_done = {source_fulfillment_done: true, source_data: message.source_data, source_account_data: message.source_account_data};
+        var attributes_tab_closed = {source_tab_closed: true, source_data: current_order, source_account_data: current_account};
 
         _.each(_.pick(message ,["cost", "taxes", "source_confirmation", "source_account_username"]), function(value, key){
           console.log(key + ":" + value);
-          attributes[key] = value;
+          attributes_fulfillment_done[key] = value;
+          attributes_tab_closed[key] = value;
         });
-        
-        console.log(attributes);
 
+
+        chrome.tabs.sendMessage(webscout_orders_tab.id, attributes_tab_closed)
         current_order = null;
         current_account = null;
-        chrome.tabs.sendMessage(webscout_orders_tab.id, attributes);
+        chrome.tabs.sendMessage(webscout_orders_tab.id, attributes_fulfillment_done);
         chrome.tabs.remove(sender.tab.id);
       }
     }
@@ -137,6 +141,14 @@ function injectExtensionScripts(module, tabId, callback) {
       }
 
       chrome.tabs.remove(sender.tab.id);
+    }
+  });
+
+  chrome.tabs.onRemoved.addListener(function(tabId, changeInfo, tab){
+    console.log(source_tab);
+    if(tabId === source_tab.id && current_order){
+      console.log("tab closed");
+      chrome.tabs.sendMessage(webscout_orders_tab.id, {source_tab_closed: true, source_data: current_order, source_account_data: current_account})
     }
   });
 })();
@@ -157,13 +169,13 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     console.log(order_source_domain);
     console.log(current_domain);
 
-    //if (current_domain.indexOf(order_source_domain) >= 0) { //check if we're on a retailer website
-    //  //inject fulfillment scripts
-    //  injectExtensionScripts("fulfillment", tabId);
-    //}
-    //else if(supported_cashback_websites.indexOf(current_domain)){ //check if we're on a callback website
-    //  injectExtensionScripts("cashback", tabId);
-    //}
-    injectExtensionScripts("fulfillment", tabId);
+    if (current_domain.indexOf(order_source_domain) >= 0) { //check if we're on a retailer website
+      //inject fulfillment scripts
+      injectExtensionScripts("fulfillment", tabId);
+    }
+    else if(supported_cashback_websites.indexOf(current_domain)){ //check if we're on a callback website
+      injectExtensionScripts("cashback", tabId);
+    }
+    //injectExtensionScripts("fulfillment", tabId);
   }
 });

@@ -12,6 +12,8 @@
 
   //add the fulfillment buttons to the orders grid
   function create_fulfill_links(grid_data){
+    console.log("grid data");
+    console.log(grid_data);
     function fulfill(){
       //find order data
       var order_row_element = $(this).closest('tr');
@@ -28,7 +30,13 @@
 
       //clone because we want to modify without changing the initial data
       current_order = data_row;
+
+      console.log("Current order");
+      console.log(current_order);
       data_row = _.cloneDeep(data_row);
+      data_row.quantity = current_order.quantity;
+      console.log(current_order);
+      console.log(data_row);
 
       //get the source that we want (from the link href)
       var source = _.find(data_row.domainItems, function(domainItem){
@@ -39,6 +47,10 @@
           return source_link.indexOf(domainItem.item_source_link) >= 0;
         }
       });
+
+      console.log("before assign");
+      console.log(data_row);
+      console.log(source);
 
       _.assign(data_row, source);
 
@@ -63,10 +75,10 @@
       else{
         link += "?webscout_fulfillment=1&page=product";
       }
-      //
-        if(link.indexOf("walmart-removethis") >= 0){
-          link = "https://shop.upromise.com/e/members/benefits.php?xkeyword=walmart"
-        }
+
+      //if(link.indexOf("walmart-removethis") >= 0){
+      //  link = "https://shop.upromise.com/e/members/benefits.php?xkeyword=walmart"
+      //}
 
       $(this).attr('href', link);
     });
@@ -76,23 +88,27 @@
   chrome.extension.onMessage.addListener(function(message, sender, sendResponse){
     console.log(message);
 
+    var attributes = {
+      uid: current_order.uid,
+      aoi_real_cost: message.cost,
+      aoi_real_tax: message.taxes,
+      source_confirmation: message.source_confirmation,
+      source_account_username: message.source_account_username,
+    };
+
+    attributes = _.pickBy(attributes, function(val, key){
+      console.log(val);
+      return val && val != '';
+    });
+
     if(message.source_fulfillment_done){
       //send message to webscout orders page to update order data
-      var attributes = {
-        uid: current_order.uid,
-        aoi_real_cost: message.cost,
-        aoi_real_tax: message.taxes,
-        source_confirmation: message.source_confirmation,
-        source_account_username: message.source_account_username,
-      };
-
-      attributes = _.pickBy(attributes, function(val, key){
-        console.log(val);
-        return val && val != '';
-      });
-
 
       window.postMessage({message_type: "FROM_PAGE", event_type: "source_fulfillment_done", order_attributes: attributes, source_data: message.source_data, source_account_data: message.source_account_data}, "*")
+    }
+    else if(message.source_tab_closed){
+      console.log("TAB CLOSED");
+      window.postMessage({message_type: "FROM_PAGE", event_type: "source_tab_closed", order_attributes: attributes, source_data: message.source_data, source_account_data: message.source_account_data}, "*")
     }
   });
 

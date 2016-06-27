@@ -178,13 +178,16 @@ function extractDomain(url) {
 }
 
 function getWebDriver(source_domain) {
+  console.log(source_domain);
   try {
     var capitalized_domain = source_domain.charAt(0).toUpperCase() + source_domain.slice(1);
+    console.log(capitalized_domain);
     eval("var web_driver = new " + capitalized_domain + "WebDriver()");
 
     return web_driver;
   }
   catch (e) {
+    console.log(e);
     return new BaseWebDriver(source_domain);
   }
 }
@@ -285,12 +288,17 @@ function removeHighlight(elem) {
   }
 }
 
-function pasteStringInElem(elem) {
+function pasteStringInElem(elem, overwrite){
+  console.log("elem to paste in ");
+  console.log(elem);
   $(elem).select();
-  if (document.execCommand('paste')) {
+  if(overwrite) {
+    $(elem).val("");
+  }
+  if(document.execCommand('paste')){
     console.log("should have pasted!");
   }
-  else {
+  else{
     console.log("no paste");
   }
 }
@@ -332,6 +340,8 @@ function autofill_shipping_form(web_driver, shipping_fields) {
     }
 
     if(val && val.length > 0){
+      console.log(field);
+      console.log(val);
       $("input[field-name='" + field + "']").val(val);
     }
   });
@@ -429,11 +439,12 @@ function init_fulfillment(web_driver, order_data, account_data){
     if ($("#fulfillment-overlay").length == 0) {
       var shipping_fields = _.pick(order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code", "item_source_link"]);
       shipping_fields.quantity = order_data.quantity * order_data.aoi_quantity;
-      if(!_.has(account_data, "error")) {
+      if(!_.has(account_data, "error" && account_data && account_data.username && account_data.password)) {
         shipping_fields.username = account_data.username;
         shipping_fields.password = account_data.password;
+        web_driver.login(account_data.username, account_data.password);
       }
-      else { shipping_fields.username = account_data.error; }
+      else { shipping_fields.username = "N/A"; shipping_fields.password = "N/A"; }
       var split_name = shipping_fields.shipping_name.split(" ");
       shipping_fields.first_name = split_name[0];
       shipping_fields.last_name = split_name.splice(1).join(' ');
@@ -447,8 +458,6 @@ function init_fulfillment(web_driver, order_data, account_data){
       // Create overlayData object and cache jQuery selectors
       overlay_data = new OverlayData();
       overlay_data.cacheSelectors();
-
-      web_driver.login(account_data.username, account_data.password);
 
       /** ----------- Handlers ----------- **/
       function provision_inputs_event_handlers() {
@@ -467,7 +476,7 @@ function init_fulfillment(web_driver, order_data, account_data){
                     web_driver.save_element_selector(this, field_to_page_type_map[field_name], field_name);
                   }
                   fill_input_success(currentField);
-                  pasteStringInElem(this);
+                  pasteStringInElem(this, true);
                   event.data.incrementIndex();
                 }
               });
@@ -659,6 +668,7 @@ $(document).ready(function() {
   };
 
   var web_driver = getWebDriver(extractDomain(window.location.href));
+  console.log(web_driver);
 
 
   web_driver.ready(function() {

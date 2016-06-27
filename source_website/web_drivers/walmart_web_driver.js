@@ -4,7 +4,7 @@
 
 /** constructor **/
 function WalmartWebDriver(){
-  this._dropdown_resolvers = [walmart_chooser_dropdown_resolver];
+  this._dropdown_resolvers = [walmart_chooser_dropdown_resolver, walmart_select_dropdown_resolver];
 }
 WalmartWebDriver.prototype = new BaseWebDriver('walmart');
 
@@ -101,8 +101,13 @@ WalmartWebDriver.prototype.set_field_value = function(field, value){
   return BaseWebDriver.prototype.set_field_value.call(this, field, value);
 }
 
+
+
+
+
+
 WalmartWebDriver.prototype._is_dropdown = function(element){
-  return $(element).hasClass('chooser') && $(element).hasClass('js-chooser');
+  return ($(element).hasClass('chooser') && $(element).hasClass('js-chooser')) || $(element).hasClass('form-control select-field');
 }
 
 WalmartWebDriver.prototype._dropdown_resolver = function(element, value){
@@ -122,4 +127,11 @@ function walmart_chooser_dropdown_resolver(element, value){
     })
     .first()
     .trigger('click');
+}
+function walmart_select_dropdown_resolver(element, value){
+  $(element).find("option")
+    .filter(function(){
+      return !(value.toLowerCase() === $(this).text().toLowerCase());
+    })
+    .remove(); // INFERNOOOOO
 }

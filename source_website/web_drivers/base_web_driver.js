@@ -4,10 +4,13 @@
 var backend_api_endpoint = "https://45.55.18.141";
 //var backend_api_endpoint = "http://localhost:8888";
 
-function pasteStringInElem(elem){
+function pasteStringInElem(elem, overwrite){
   console.log("elem to paste in ");
   console.log(elem);
   $(elem).select();
+  if(overwrite) {
+    $(elem).val("");
+  }
   if(document.execCommand('paste')){
     console.log("should have pasted!");
   }
@@ -232,7 +235,7 @@ BaseWebDriver.prototype._text_input_resolver = function(element, value){
   console.log("resolving text input");
   $(element).val('');
   copyToClipboard($("<span>" + value + "</span>").get(0));
-  pasteStringInElem(element);
+  pasteStringInElem(element, true);
 };
 
 BaseWebDriver.prototype._dropdown_resolver = function(element, value){
