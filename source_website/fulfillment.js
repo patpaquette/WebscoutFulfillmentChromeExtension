@@ -380,7 +380,6 @@ function highlight_source_confirmation_for_selection() {
       var matches = trimmed_str.match(source_confirmation_regex);
 
       console.log(trimmed_str);
-
       if (matches) {
         return trimmed_str.length === matches[0].length;
       }
@@ -439,7 +438,7 @@ function init_fulfillment(web_driver, order_data, account_data){
     if ($("#fulfillment-overlay").length == 0) {
       var shipping_fields = _.pick(order_data, ["shipping_name", "shipping_phone", "shipping_address_line_1", "shipping_address_line_2", "shipping_address_line_3", "shipping_city", "shipping_country_code", "shipping_state", "shipping_postal_code", "item_source_link"]);
       shipping_fields.quantity = order_data.quantity * order_data.aoi_quantity;
-      if(!_.has(account_data, "error" && account_data && account_data.username && account_data.password)) {
+      if(!_.has(account_data, "error") && account_data && account_data.username && account_data.password) {
         shipping_fields.username = account_data.username;
         shipping_fields.password = account_data.password;
         web_driver.login(account_data.username, account_data.password);

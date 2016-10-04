@@ -88,6 +88,10 @@ function injectExtensionScripts(module, tabId, callback) {
     console.log(message);
 
     if (message.set_order_data) { // set order data for use in the rest of the process
+      if(source_tab){
+        chrome.tabs.remove(source_tab.id);
+      }
+
       current_order = null;
       set_order_data(message.order_data);
       webscout_orders_tab = sender.tab;
@@ -145,8 +149,8 @@ function injectExtensionScripts(module, tabId, callback) {
   });
 
   chrome.tabs.onRemoved.addListener(function(tabId, changeInfo, tab){
-    console.log(source_tab);
-    if(tabId === source_tab.id && current_order){
+
+    if(source_tab && tabId === source_tab.id && current_order){
       console.log("tab closed");
       chrome.tabs.sendMessage(webscout_orders_tab.id, {source_tab_closed: true, source_data: current_order, source_account_data: current_account})
     }

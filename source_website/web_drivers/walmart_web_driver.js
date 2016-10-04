@@ -98,6 +98,10 @@ WalmartWebDriver.prototype.set_field_value = function(field, value){
     value = get_normalized_us_state(value);
   }
 
+  if(field === 'postal_code'){
+    value = value.split("-")[0];
+  }
+
   return BaseWebDriver.prototype.set_field_value.call(this, field, value);
 }
 
