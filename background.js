@@ -52,7 +52,7 @@ function injectExtensionScripts(module, tabId, callback) {
         "bower_components/lodash/lodash.js",
         "bower_components/jquery/dist/jquery.js",
         "bower_components/q/q.js",
-        "bower_components/handlebars/handlebars.js",
+        "bower_components/handlebars/handlebars.min.js",
         "bower_components/async/dist/async.js",
         "source_website/fulfillment.js",
         "source_website/web_drivers/base_web_driver.js",
